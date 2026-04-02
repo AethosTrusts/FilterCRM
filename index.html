@@ -1,0 +1,2549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Filterbaby — Investor Pipeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream: #F5F2EC;
+  --dark: #1A1A17;
+  --gold: #C8B89A;
+  --gold-light: #E8DECE;
+  --gold-dark: #A89878;
+  --green: #4A7C59;
+  --green-light: #E8F0EA;
+  --red: #9C4040;
+  --red-light: #F5EAEA;
+  --blue: #4A6A8C;
+  --blue-light: #E8EEF4;
+  --orange: #B8864A;
+  --orange-light: #FFF4E8;
+  --text: #2C2C28;
+  --text-secondary: #7A776E;
+  --border: #E0DCD4;
+  --card-bg: #FFFFFF;
+  --shadow: 0 1px 3px rgba(26,26,23,0.06), 0 4px 12px rgba(26,26,23,0.04);
+  --shadow-lg: 0 4px 16px rgba(26,26,23,0.08), 0 12px 32px rgba(26,26,23,0.06);
+  --radius: 10px;
+  --radius-sm: 6px;
+  --radius-lg: 14px;
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', -apple-system, sans-serif;
+  background: var(--cream);
+  color: var(--text);
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── HEADER ─── */
+.header {
+  background: var(--dark);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.header-logo {
+  font-family: 'DM Serif Display', serif;
+  color: var(--cream);
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+.header-badge {
+  background: var(--gold);
+  color: var(--dark);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+.header-btn {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: var(--cream);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.header-btn:hover { background: rgba(255,255,255,0.14); }
+.header-btn svg { width: 16px; height: 16px; }
+
+/* ─── SETUP BANNER ─── */
+.setup-banner {
+  background: var(--orange-light);
+  border-bottom: 1px solid var(--gold-light);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--orange);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.setup-banner:hover { background: #FFEFD5; }
+.setup-banner.connected {
+  background: var(--green-light);
+  color: var(--green);
+  border-bottom-color: #D0E0D4;
+}
+.setup-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--orange);
+  flex-shrink: 0;
+}
+.setup-banner.connected .setup-dot { background: var(--green); }
+
+/* ─── STATS BAR ─── */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.stat-item {
+  background: var(--card-bg);
+  padding: 16px 12px;
+  text-align: center;
+}
+.stat-value {
+  font-family: 'DM Serif Display', serif;
+  font-size: 24px;
+  color: var(--dark);
+  line-height: 1;
+}
+.stat-label {
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+}
+
+/* ─── TAB NAV ─── */
+.tab-nav {
+  display: flex;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.tab-nav::-webkit-scrollbar { display: none; }
+.tab-btn {
+  flex-shrink: 0;
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active {
+  color: var(--dark);
+  border-bottom-color: var(--gold);
+}
+.tab-count {
+  background: var(--cream);
+  color: var(--text-secondary);
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-left: 6px;
+}
+.tab-btn.active .tab-count {
+  background: var(--gold-light);
+  color: var(--gold-dark);
+}
+
+/* ─── SEARCH & FILTER BAR ─── */
+.filter-bar {
+  padding: 12px 16px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+}
+.search-input {
+  flex: 1;
+  padding: 10px 12px 10px 36px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--cream);
+  color: var(--text);
+  outline: none;
+  transition: var(--transition);
+  background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237A776E' stroke-width='2' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 10px center;
+}
+.search-input:focus {
+  border-color: var(--gold);
+  background-color: #fff;
+}
+.filter-pill {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--card-bg);
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+.filter-pill:hover, .filter-pill.active {
+  border-color: var(--gold);
+  color: var(--dark);
+  background: var(--gold-light);
+}
+
+/* ─── INVESTOR CARDS ─── */
+.cards-container {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 100px;
+}
+.investor-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  transition: var(--transition);
+  cursor: pointer;
+  position: relative;
+}
+.investor-card:hover {
+  box-shadow: var(--shadow);
+  border-color: var(--gold-light);
+}
+.investor-card:active {
+  transform: scale(0.995);
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+.card-firm {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--dark);
+  line-height: 1.3;
+}
+.card-contact {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+.card-status {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+}
+.status-new { background: var(--blue-light); color: var(--blue); }
+.status-contacted { background: var(--orange-light); color: var(--orange); }
+.status-meeting { background: var(--gold-light); color: var(--gold-dark); }
+.status-due-diligence { background: #F0E8F5; color: #7C4A8C; }
+.status-nda-sent { background: #E8F0F5; color: #4A708C; }
+.status-term-sheet { background: var(--green-light); color: var(--green); }
+.status-closed { background: var(--green-light); color: var(--green); }
+.status-archived { background: #EEEDEA; color: #999; }
+.status-declined { background: var(--red-light); color: var(--red); }
+
+.card-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.card-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.card-meta-item svg { width: 14px; height: 14px; opacity: 0.6; }
+.card-nda-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+.nda-signed { background: var(--green-light); color: var(--green); }
+.nda-pending { background: var(--orange-light); color: var(--orange); }
+.nda-none { background: var(--cream); color: var(--text-secondary); }
+
+.card-links {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+.card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--blue);
+  background: var(--blue-light);
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: var(--transition);
+}
+.card-link:hover { background: #D0DEF0; }
+.card-link svg { width: 12px; height: 12px; }
+
+.card-thesis {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--gold-dark);
+  font-style: italic;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-note {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ─── THESIS BLOCK (panel) ─── */
+.thesis-block {
+  background: linear-gradient(135deg, var(--gold-light) 0%, #F5F0E5 100%);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 16px;
+}
+.thesis-block-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gold-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+.thesis-block-header svg { width: 14px; height: 14px; }
+.thesis-block-text {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.55;
+}
+
+.panel-links {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.panel-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--blue);
+  background: var(--blue-light);
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: var(--transition);
+  flex: 1;
+  justify-content: center;
+}
+.panel-link:hover { background: #D0DEF0; }
+.panel-link svg { width: 16px; height: 16px; }
+
+/* ─── FAB (Floating Action Button) ─── */
+.fab {
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--dark);
+  color: var(--cream);
+  border: none;
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  z-index: 50;
+}
+.fab:hover { transform: scale(1.08); }
+.fab:active { transform: scale(0.95); }
+.fab svg { width: 24px; height: 24px; }
+
+/* ─── SLIDE PANEL (Mobile-first detail/edit view) ─── */
+.panel-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26,26,23,0.4);
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.panel-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+.slide-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 100%;
+  max-width: 480px;
+  height: 100dvh;
+  background: var(--cream);
+  z-index: 201;
+  transform: translateX(100%);
+  transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.slide-panel.open {
+  transform: translateX(0);
+}
+.panel-header {
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.panel-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 18px;
+  color: var(--dark);
+}
+.panel-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+}
+.panel-close:hover { background: var(--cream); color: var(--dark); }
+.panel-close svg { width: 20px; height: 20px; }
+
+.panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  -webkit-overflow-scrolling: touch;
+}
+.panel-footer {
+  padding: 16px 20px;
+  background: var(--card-bg);
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ─── FORM STYLES ─── */
+.form-group {
+  margin-bottom: 16px;
+}
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--card-bg);
+  outline: none;
+  transition: var(--transition);
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(200,184,154,0.15);
+}
+.form-textarea {
+  min-height: 80px;
+  resize: vertical;
+  line-height: 1.5;
+}
+.form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%237A776E' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* ─── TIMELINE ─── */
+.timeline {
+  margin-top: 20px;
+}
+.timeline-header {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 12px;
+}
+.timeline-item {
+  display: flex;
+  gap: 12px;
+  padding-bottom: 16px;
+  position: relative;
+}
+.timeline-item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 24px;
+  bottom: 0;
+  width: 1px;
+  background: var(--border);
+}
+.timeline-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--gold-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.timeline-dot svg { width: 12px; height: 12px; color: var(--gold-dark); }
+.timeline-content {
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.timeline-date {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+.timeline-add {
+  width: 100%;
+  padding: 10px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: none;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  margin-top: 8px;
+}
+.timeline-add:hover {
+  border-color: var(--gold);
+  color: var(--dark);
+  background: var(--gold-light);
+}
+
+/* ─── QUICK UPDATE BAR (for fast mobile notes) ─── */
+.quick-update {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--card-bg);
+  border-top: 1px solid var(--border);
+  padding: 12px 16px;
+  z-index: 202;
+  gap: 8px;
+}
+.quick-update.visible { display: flex; }
+.quick-update input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+}
+.quick-update input:focus { border-color: var(--gold); }
+.quick-update button {
+  padding: 10px 16px;
+  background: var(--dark);
+  color: var(--cream);
+  border: none;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* ─── BUTTONS ─── */
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-primary {
+  background: var(--dark);
+  color: var(--cream);
+  flex: 1;
+}
+.btn-primary:hover { background: #2C2C28; }
+.btn-secondary {
+  background: var(--cream);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { background: var(--gold-light); }
+.btn-danger {
+  background: var(--red-light);
+  color: var(--red);
+}
+.btn-danger:hover { background: #EDD; }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+
+/* ─── PROFILING INDICATOR ─── */
+@keyframes pulse-gold {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.card-profiling {
+  font-size: 11px;
+  color: var(--gold-dark);
+  animation: pulse-gold 1.5s ease-in-out infinite;
+  margin-top: 6px;
+}
+
+/* ─── TEMPLATES MODAL ─── */
+.tpl-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(26,26,23,0.5);
+  z-index: 300;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.tpl-modal.open { opacity: 1; pointer-events: all; }
+.tpl-sheet {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  width: 100%;
+  max-width: 540px;
+  max-height: 85dvh;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  overflow: hidden;
+}
+.tpl-modal.open .tpl-sheet { transform: translateY(0); }
+.tpl-sheet-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.tpl-sheet-header h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 18px;
+  color: var(--dark);
+  font-weight: 400;
+}
+.tpl-sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  -webkit-overflow-scrolling: touch;
+}
+.tpl-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.tpl-card:hover { border-color: var(--gold); box-shadow: var(--shadow); }
+.tpl-card.active { border-color: var(--gold); background: var(--gold-light); }
+.tpl-card-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--dark);
+  margin-bottom: 2px;
+}
+.tpl-card-cat {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gold-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.tpl-card-preview {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 6px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.tpl-preview-full {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text);
+  white-space: pre-wrap;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.tpl-preview-full .tpl-var {
+  background: var(--gold-light);
+  color: var(--gold-dark);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-weight: 600;
+  font-size: 12px;
+}
+.tpl-actions {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ─── EMAIL COMPOSE BUTTON (in lead panel) ─── */
+.email-compose-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.email-compose-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: #D44638;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: inherit;
+  flex: 1;
+  justify-content: center;
+}
+.email-compose-btn:hover { background: #B83A2F; }
+.email-compose-btn svg { width: 16px; height: 16px; }
+.email-tpl-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--cream);
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: inherit;
+}
+.email-tpl-btn:hover { border-color: var(--gold); color: var(--dark); background: var(--gold-light); }
+.email-tpl-btn svg { width: 16px; height: 16px; }
+
+/* ─── LOGIN SCREEN ─── */
+.login-gate {
+  position: fixed;
+  inset: 0;
+  background: var(--dark);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 24px;
+}
+.login-gate.hidden { display: none; }
+.login-logo {
+  font-family: 'DM Serif Display', serif;
+  font-size: 32px;
+  color: var(--cream);
+  letter-spacing: -0.02em;
+}
+.login-sub {
+  font-size: 14px;
+  color: var(--gold);
+  margin-top: -16px;
+}
+.login-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card-bg);
+  color: var(--dark);
+  border: none;
+  padding: 14px 28px;
+  border-radius: var(--radius);
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: var(--shadow-lg);
+  transition: var(--transition);
+}
+.login-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+.login-btn svg { width: 20px; height: 20px; }
+.login-domain {
+  font-size: 12px;
+  color: rgba(245,242,236,0.4);
+}
+
+/* ─── USER AVATAR (header) ─── */
+.user-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 20px;
+  padding: 4px 12px 4px 4px;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 12px;
+  color: var(--cream);
+}
+.user-pill:hover { background: rgba(255,255,255,0.14); }
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.user-avatar-fallback {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: var(--dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ─── SETTINGS MODAL ─── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26,26,23,0.5);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+.modal {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 440px;
+  max-height: 80dvh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+.modal-header {
+  padding: 20px 20px 0;
+}
+.modal-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px;
+  color: var(--dark);
+}
+.modal-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+.modal-body {
+  padding: 20px;
+}
+.modal-footer {
+  padding: 0 20px 20px;
+  display: flex;
+  gap: 8px;
+}
+
+.integration-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  transition: var(--transition);
+}
+.integration-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 16px;
+}
+.integration-info { flex: 1; }
+.integration-name { font-weight: 600; font-size: 14px; }
+.integration-desc { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
+.integration-status {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+.int-connected { background: var(--green-light); color: var(--green); }
+.int-disconnected { background: var(--cream); color: var(--text-secondary); }
+
+/* ─── EMPTY STATE ─── */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-secondary);
+}
+.empty-state svg { width: 48px; height: 48px; opacity: 0.3; margin-bottom: 12px; }
+.empty-state h3 {
+  font-family: 'DM Serif Display', serif;
+  color: var(--dark);
+  margin-bottom: 4px;
+}
+.empty-state p { font-size: 13px; }
+
+/* ─── TOAST ─── */
+.toast-container {
+  position: fixed;
+  top: 70px;
+  right: 16px;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toast {
+  background: var(--dark);
+  color: var(--cream);
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
+  max-width: 320px;
+}
+.toast-success { background: var(--green); }
+.toast-error { background: var(--red); }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } }
+@keyframes fadeOut { to { opacity: 0; transform: translateY(-8px); } }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 480px) {
+  .stats-bar { grid-template-columns: repeat(2, 1fr); }
+  .stat-value { font-size: 20px; }
+  .form-row { grid-template-columns: 1fr; }
+  .header-btn span { display: none; }
+}
+@media (min-width: 768px) {
+  .cards-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+@media (min-width: 1200px) {
+  .cards-container {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN GATE -->
+<div class="login-gate" id="loginGate">
+  <div class="login-logo">filterbaby</div>
+  <div class="login-sub">Investor Pipeline</div>
+  <button class="login-btn" onclick="window.location='/api/auth/login'">
+    <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+    Sign in with Google
+  </button>
+  <div class="login-domain">Restricted to @filterbaby.com</div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-brand">
+    <div class="header-logo">filterbaby</div>
+    <div class="header-badge">Pipeline</div>
+  </div>
+  <div class="header-actions">
+    <button class="header-btn" onclick="openTemplatesLibrary()" title="Email Templates">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg>
+      <span>Templates</span>
+    </button>
+    <button class="header-btn" onclick="exportToXlsx()" title="Export to Excel">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+      <span>Export</span>
+    </button>
+    <button class="header-btn" onclick="openSettings()" title="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      <span>Settings</span>
+    </button>
+    <div class="user-pill" id="userPill" onclick="window.location='/api/auth/logout'" title="Sign out">
+      <div class="user-avatar-fallback" id="userAvatar">?</div>
+      <span id="userNameLabel">...</span>
+    </div>
+  </div>
+</header>
+
+<!-- SETUP BANNER -->
+<div class="setup-banner" id="setupBanner" onclick="openSettings()">
+  <div class="setup-dot"></div>
+  <span>Connect your integrations — tap to set up Google Sheets, Slack, & PandaDoc</span>
+</div>
+
+<!-- STATS BAR -->
+<div class="stats-bar" id="statsBar">
+  <div class="stat-item">
+    <div class="stat-value" id="statTotal">0</div>
+    <div class="stat-label">Total</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-value" id="statActive">0</div>
+    <div class="stat-label">Active</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-value" id="statNda">0</div>
+    <div class="stat-label">NDA Out</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-value" id="statMeetings">0</div>
+    <div class="stat-label">Meetings</div>
+  </div>
+</div>
+
+<!-- TAB NAV -->
+<div class="tab-nav" id="tabNav">
+  <button class="tab-btn active" data-tab="all" onclick="setTab('all', this)">All<span class="tab-count" id="countAll">0</span></button>
+  <button class="tab-btn" data-tab="new" onclick="setTab('new', this)">New<span class="tab-count" id="countNew">0</span></button>
+  <button class="tab-btn" data-tab="contacted" onclick="setTab('contacted', this)">Contacted<span class="tab-count" id="countContacted">0</span></button>
+  <button class="tab-btn" data-tab="meeting" onclick="setTab('meeting', this)">Meeting<span class="tab-count" id="countMeeting">0</span></button>
+  <button class="tab-btn" data-tab="due-diligence" onclick="setTab('due-diligence', this)">Due Diligence<span class="tab-count" id="countDd">0</span></button>
+  <button class="tab-btn" data-tab="nda-sent" onclick="setTab('nda-sent', this)">NDA<span class="tab-count" id="countNda">0</span></button>
+  <button class="tab-btn" data-tab="term-sheet" onclick="setTab('term-sheet', this)">Term Sheet<span class="tab-count" id="countTs">0</span></button>
+  <button class="tab-btn" data-tab="archived" onclick="setTab('archived', this)">Archived<span class="tab-count" id="countArchived">0</span></button>
+</div>
+
+<!-- SEARCH / FILTER -->
+<div class="filter-bar">
+  <input type="search" class="search-input" id="searchInput" placeholder="Search firms, contacts, notes..." oninput="renderCards()">
+  <button class="filter-pill" onclick="toggleSort(this)">A–Z</button>
+</div>
+
+<!-- INVESTOR CARDS -->
+<div class="cards-container" id="cardsContainer"></div>
+
+<!-- FAB -->
+<button class="fab" onclick="openPanel('new')" title="Add investor">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+</button>
+
+<!-- SLIDE PANEL (Detail/Edit) -->
+<div class="panel-overlay" id="panelOverlay" onclick="closePanel()"></div>
+<div class="slide-panel" id="slidePanel">
+  <div class="panel-header">
+    <div class="panel-title" id="panelTitle">New Lead</div>
+    <button class="panel-close" onclick="closePanel()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="panel-body" id="panelBody"></div>
+  <div class="panel-footer" id="panelFooter"></div>
+</div>
+
+<!-- QUICK UPDATE BAR (shows when viewing a lead) -->
+<div class="quick-update" id="quickUpdate">
+  <input type="text" id="quickInput" placeholder="Quick note..." onkeydown="if(event.key==='Enter')addQuickNote()">
+  <button onclick="addQuickNote()">Send</button>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">Integrations</div>
+      <div class="modal-subtitle">Connect your tools to keep the pipeline in sync. All keys are stored locally in your browser.</div>
+    </div>
+    <div class="modal-body" id="settingsBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeSettings()" style="flex:1;">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- TEMPLATES MODAL (bottom sheet) -->
+<div class="tpl-modal" id="tplModal" onclick="closeTemplates()">
+  <div class="tpl-sheet" onclick="event.stopPropagation()">
+    <div class="tpl-sheet-header">
+      <h2 id="tplModalTitle">Email Templates</h2>
+      <button class="panel-close" onclick="closeTemplates()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="tpl-sheet-body" id="tplBody"></div>
+    <div class="tpl-actions" id="tplActions"></div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+// DATA LAYER
+// ════════════════════════════════════════════════════════════════
+const STORAGE_KEY = 'fb_investor_pipeline';
+const SETTINGS_KEY = 'fb_pipeline_settings';
+
+const DEFAULT_SETTINGS = {
+  teamMembers: 'Andrew, Xin, Lynn'
+};
+
+// Server integration status + auth
+let serverStatus = { anthropic: false, slack: false, pandadoc: false, auth: false };
+let currentUser = null; // { email, name, picture }
+
+function loadData() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+  } catch { return []; }
+}
+function saveData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+function loadSettings() {
+  try {
+    return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(SETTINGS_KEY)) };
+  } catch { return { ...DEFAULT_SETTINGS }; }
+}
+function saveSettingsData(s) {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+}
+
+let investors = loadData();
+let settings = loadSettings();
+let currentTab = 'all';
+let sortAsc = true;
+let editingId = null;
+
+// Seed data if empty
+if (investors.length === 0) {
+  const seed = [
+    { firm: 'True Beauty Ventures', contact: 'Cristina Nuñez', email: '', stage: 'Seed–Series B', checkSize: '$2–5M', status: 'new', nda: 'none', owner: 'Andrew', website: 'https://truebeautyventures.com', linkedin: 'https://www.linkedin.com/company/true-beauty-ventures', thesis: 'Exclusively beauty & wellness. Backs "problem-solution" brands solving real consumer pain points with innovative products. K18 (hair repair, exited to Unilever ~$500M), Crown Affair, Caliray, Dieux, Vacation, Jupiter. Founded by Rich Gersten (ex-Tengram, North Castle) and Cristina Nuñez (ex-L Catterton). Also runs Bridge Mentorship for emerging beauty founders.', notes: 'Premier target. Problem-solution thesis maps perfectly to FB water-as-skincare positioning.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Newbound Venture Capital', contact: 'Maggie Abeles', email: '', stage: 'Seed–Series A', checkSize: '$500K–$3M', status: 'new', nda: 'none', owner: 'Andrew', website: 'https://newboundvc.com', linkedin: 'https://www.linkedin.com/company/newbound-venture-capital', thesis: 'Early-stage beauty, wellness, and personal care. Invests in founder-led brands with strong product-market fit and clinical or cultural credibility. Portfolio: K18 (exited to Unilever), Iris&Romeo, Mother Science, The 7 Virtues, Chris McMillan. Beauty Independent 2024 Beacon Award finalist for Best Seed + Small Growth Investor.', notes: 'K18 co-investor. Right stage, right check size, right thesis for FB.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Willow Growth Partners', contact: 'Deborah Benton', email: '', stage: 'Seed', checkSize: '$2–4M', status: 'new', nda: 'none', owner: 'Andrew', website: 'https://willowgrowth.com', linkedin: 'https://www.linkedin.com/company/willow-growth-partners', thesis: 'First institutional capital for consumer brands at $2–5M trailing revenue. $28M Fund I. 75% of portfolio has female or minority founders. Targets sub-$10M valuations. Portfolio: YSE Beauty, Bubble, Dae, Kosas, Jupiter, Uoma Beauty, Perelel, Manscaped. Founded by Deborah Benton (ex-Nasty Gal president/COO) and Amanda Schutzbank.', notes: 'Values-led fund. Perfect check size. Strong founder networks in beauty.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Beechwood Capital', contact: 'Larry Kahn', email: '', stage: 'Venture', checkSize: 'Lower-mid market', status: 'new', nda: 'none', owner: 'Lynn', website: 'https://www.beechwoodcap.com', linkedin: '', thesis: 'Consumer brands with product innovation and retail distribution upside. Unique pedigree: founder Larry Kahn built The Holmes Group (Crock-Pot, Rival, Bionaire air purifiers) to $800M revenue before selling to Jarden. Beauty portfolio: Tatcha (exited to Unilever), Kosas, Shani Darden Skincare, iNNBeauty Project, Violet Grey (exited). Housewares-to-beauty bridge makes this firm uniquely suited for hardware products crossing into beauty.', notes: 'Only firm on the list with appliance/housewares pedigree. Natural fit for filter hardware.', timeline: [], created: new Date().toISOString() },
+    { firm: 'InviNext Growth Partners', contact: 'Sarah Foley', email: '', stage: 'Early-stage', checkSize: '$1M+', status: 'new', nda: 'none', owner: 'Andrew', website: 'https://invinextgrowth.com', linkedin: '', thesis: 'Early-stage consumer brands targeting $1M+ revenue with flexible equity structures. Partners Sarah Foley and Debbie Perelman bring deep beauty/wellness operating experience. Portfolio: Supergoop, Womaness, RescueMD, Jupiter, Mad Rabbit, Knix. Notably invested in Aerflo (air quality tech) — shows comfort backing wellness hardware, not just topicals.', notes: 'Aerflo investment = direct precedent for wellness hardware. Supergoop backer.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Selva Ventures', contact: '', email: '', stage: 'Seed–Series A', checkSize: '$1–2M', status: 'new', nda: 'none', owner: 'Lynn', website: 'https://selvaventures.com', linkedin: 'https://www.linkedin.com/company/selva-ventures', thesis: 'Health, wellness, beauty, and personal care CPG at seed stage. $34M Fund II. Emphasis on "clean ingredients, real efficacy" and products that make self-care easier. Portfolio includes One Skin (longevity skincare), demonstrating interest in science-backed beauty innovation. Checks typically $1–2M.', notes: 'Science-backed beauty thesis aligns with FB clinical data. Right check size.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Verity Venture Partners', contact: '', email: '', stage: 'Seed–Series A', checkSize: '$500K–$3M', status: 'new', nda: 'none', owner: '', website: '', linkedin: '', thesis: 'Pure-play beauty and personal care venture fund focused on early-stage brands. Led both Dae Hair and Caliray Series A rounds (~$8M each). Deep beauty industry relationships and operational support. One of the few funds exclusively dedicated to beauty at the seed/Series A stage.', notes: 'Led Dae Hair + Caliray Series A. Pure-play beauty, right stage.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Rachel Zoe Ventures', contact: 'Rodger Berman', email: '', stage: 'Seed', checkSize: '$250K–$2M', status: 'new', nda: 'none', owner: 'Lynn', website: 'https://rachelzoeventures.com', linkedin: '', thesis: 'Celebrity-backed seed fund investing in beauty, fashion, and lifestyle brands. Smaller checks ($250K–$2M) with high-profile brand amplification through Rachel Zoe\'s media footprint. Portfolio: Bread Beauty Supply, Hugh & Grace, Seed Health. Rodger Berman as Managing Partner, Rachel Zoe as Chairwoman.', notes: 'Smaller checks. Value-add is celebrity amplification and media reach.', timeline: [], created: new Date().toISOString() },
+    { firm: 'IgniteXL Ventures', contact: 'Claire Chang', email: '', stage: 'Pre-seed/Seed', checkSize: '$100K–$1M', status: 'new', nda: 'none', owner: '', website: 'https://ignitexl.vc', linkedin: 'https://www.linkedin.com/company/ignitexl-ventures', thesis: 'Pre-seed and seed investor at the intersection of beauty, wellness, and technology. Founding Partner Claire Chang focuses on diverse and underrepresented founders. Portfolio: Bubble, Good Light, Lion Pose, Revea, ELSI Beauty, Musely, Stryx (exited). Checks $100K–$1M — best suited as co-investor alongside a lead.', notes: 'Best as co-investor. Beauty-wellness-tech angle. Diverse founder focus.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Lerer Hippeau', contact: '', email: '', stage: 'Pre-seed–Series B', checkSize: '$100K–$3M', status: 'new', nda: 'none', owner: '', website: 'https://lererhippeau.com', linkedin: 'https://www.linkedin.com/company/lerer-hippeau', thesis: 'NYC-based generalist venture firm with significant DTC and consumer brand track record. One of the most active early-stage investors in New York. Beauty/wellness portfolio includes Topicals and early Glossier. Broad consumer portfolio also includes Casper, Allbirds, Warby Parker. Not a beauty specialist — but strong DTC infrastructure support and retail distribution expertise.', notes: 'Not a beauty specialist but strong DTC playbook. NYC powerhouse.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Imaginary Ventures', contact: 'Kelly Dill', email: '', stage: 'Seed–Series A', checkSize: 'Avg $6.8M', status: 'new', nda: 'none', owner: '', website: 'https://imaginary.co', linkedin: 'https://www.linkedin.com/company/imaginary-ventures', thesis: 'Co-founded by Net-a-Porter founder Natalie Massenet. One of the most prestigious beauty portfolios in VC: Glossier, Kosas, Necessaire, Half Magic, SKIMS. $500M Fund III, $1B+ total AUM. Increasingly focused on larger opportunities. A small DTC water filtration startup would need a highly compelling narrative or celebrity backing to break through. Kelly Dill leads beauty sector investments.', notes: 'PARTIAL — $1B AUM may be too large for early FB. Aspirational target.', timeline: [], created: new Date().toISOString() },
+    { firm: 'L Catterton (Elevate Beauty)', contact: 'Cori Aleardi', email: '', stage: 'Early growth', checkSize: '$5–15M', status: 'new', nda: 'none', owner: '', website: 'https://lcatterton.com', linkedin: 'https://www.linkedin.com/company/l-catterton', thesis: 'World\'s largest consumer-dedicated PE firm ($34B AUM), backed by LVMH and Groupe Arnault. Elevate Beauty platform led by Cori Aleardi (ex-StriVectin president) specifically targets early-stage beauty brands with $2–15M checks. Unparalleled beauty industry connections. However, typically requires meaningful revenue traction — not a true seed investor. Beauty portfolio across parent includes Drunk Elephant, Elemis, Cover FX, and Sol de Janeiro.', notes: 'PARTIAL — Elevate Beauty arm fits but needs revenue traction. Best for Series A+.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Silas Capital', contact: 'Brian Merfeld', email: '', stage: 'Growth / Seed', checkSize: '$3–15M / <$500K', status: 'new', nda: 'none', owner: '', website: 'https://www.silascapital.com', linkedin: 'https://www.linkedin.com/company/silas-capital', thesis: 'Growth equity and venture capital for consumer brands with focus on beauty and personal care. Primary fund requires $5M+ revenue and writes $3–15M checks. Silas Ventures seed arm writes sub-$500K checks. Marquee exits: ILIA (sold to Clarins). Portfolio: Makeup by Mario, VIOLETTE_FR, YSE Beauty. Deep beauty industry expertise with strong retail placement support.', notes: 'PARTIAL — ILIA exit to Clarins validates model. Silas Ventures seed arm for early stage.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Brand Foundry Ventures', contact: 'Andrew Mitchell', email: '', stage: 'Seed–Series A', checkSize: '$100K–$10M', status: 'new', nda: 'none', owner: '', website: 'https://brandfoundry.com', linkedin: 'https://www.linkedin.com/company/brand-foundry-ventures', thesis: 'Broad consumer brand investor across beauty, fashion, food, fitness, and fintech. Some beauty investments (Birchbox, PHLUR, LOLA) but not a beauty specialist. Sweet spot around $1–1.5M checks. Heavy footwear and fashion presence (Allbirds, M.Gemi, Koio). Value-add in DTC operations and retail strategy rather than deep beauty category expertise.', notes: 'PARTIAL — Right stage/check but broad consumer focus. Not a beauty specialist.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Aria Growth Partners', contact: 'Trevor Nelson', email: '', stage: 'Growth equity', checkSize: '$10–30M', status: 'new', nda: 'none', owner: '', website: 'https://ariagrowth.com', linkedin: 'https://www.linkedin.com/company/aria-growth-partners', thesis: 'Growth equity firm targeting beauty, personal care, and wellness brands with $10M+ revenue. Writes $10–30M checks — above Filterbaby\'s current range. Marquee exit: Hero Cosmetics (sold for $630M). Portfolio: The INKEY List, Ultra Violette. Strong operational support for brands scaling from DTC into omnichannel retail. Best approached at Series B or later.', notes: 'PARTIAL — Hero Cosmetics $630M exit. Above check range; targets $10M+ rev brands.', timeline: [], created: new Date().toISOString() },
+    { firm: 'G9 Ventures', contact: 'Amy Griffin', email: '', stage: 'Seed–Series A', checkSize: '~$2M', status: 'new', nda: 'none', owner: '', website: 'https://g9.ventures', linkedin: '', thesis: 'Evergreen "better-for-you" consumer fund. 74+ companies, 6 unicorns, 11 acquisitions. Portfolio: Kosas (Ulta/Sephora), Saie (Sephora/Target), RŌZ Hair (prestige haircare), K18 (exited to Unilever ~$500–600M), Kitsch (Target/Ulta), Starface, Westman Atelier, Ami Colé. RŌZ and K18 are haircare brands where shower water quality directly affects product performance. Kosas, Saie, Kitsch sold at Ulta and Target — direct retail adjacency.', notes: 'TIER 1. K18 exit validates model. RŌZ/K18 haircare = water-quality synergy. Ulta+Target adjacency via Kosas/Saie/Kitsch.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Maveron', contact: 'Jason Stoffer', email: '', stage: 'Seed–Series A', checkSize: '$1M–$10M', status: 'new', nda: 'none', owner: '', website: 'https://maveron.com', linkedin: '', thesis: 'Consumer-behavior-change VC. Fund 8 = $225M, ~$1.3B total AUM. 90+ exits including eBay, Allbirds, Zulily IPOs. Portfolio: Nécessaire (clean body care), Veracity (hormonal/precision skincare with clinical data), Madison Reed (hair color DTC+retail), Snif (fragrance). Jason Stoffer leads beauty. Nécessaire thesis rests on what touches your skin — water is foundational. Veracity parallels FB clinical approach.', notes: 'TIER 1. Nécessaire clean body care = water-quality thesis. Veracity = clinical skincare parallel. Strong exits.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Able Partners', contact: 'Lisa Blau', email: '', stage: 'Pre-seed–Series A', checkSize: '$250K–$2M', status: 'new', nda: 'none', owner: '', website: 'https://ablepartners.nyc', linkedin: '', thesis: 'Women-led evergreen fund with explicit "Wellness Gap" thesis — narrowing gap between clinical wellness and consumer access. 82+ investments. Portfolio: Kosas, Nécessaire, OneSkin (longevity skincare), Starface, Moon Juice, KilgourMD (derm-founded scalp care), Blueland (clean household), Oura Ring, Grüns ($500M valuation). OneSkin parallels FB clinical data. KilgourMD = clinical beauty claims. Blueland = clean household crossover.', notes: 'TIER 1. "Wellness Gap" thesis maps directly to FB positioning. OneSkin/KilgourMD = clinical beauty. Blueland = home+beauty crossover.', timeline: [], created: new Date().toISOString() },
+    { firm: 'CULT Capital', contact: 'Sarah Woelfel', email: '', stage: 'Seed–Series A', checkSize: 'Up to ~$5M', status: 'new', nda: 'none', owner: '', website: 'https://www.cultcapital.com', linkedin: '', thesis: 'Formerly JMK Consumer Growth Partners. Targets brands with $2M+ revenue and cult followings. Fund II recently closed. Portfolio: Supergoop! (exited), Act+Acre (scalp/haircare), Hanni (bodycare at Sephora), Homecourt (Courteney Cox home fragrance), Lawless Beauty, Subtl Beauty, Luna Daily, Babo Botanicals. Act+Acre scalp care efficacy depends on water quality. Hanni bodycare + Homecourt home wellness mirror FB beauty-meets-home positioning.', notes: 'TIER 1. Act+Acre = water-quality synergy. Supergoop exit. "Cult brand" thesis aligns with FB subscription loyalty.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Sugar Capital', contact: 'Brian Sugar', email: '', stage: 'Seed', checkSize: '$1.5M–$2M', status: 'new', nda: 'none', owner: '', website: 'https://sugarcap.com', linkedin: '', thesis: 'Fund III = $75M (2025). Core thesis: "software-like consumer" businesses with habitual, subscription-like purchase behavior — precisely FB filter refill model. 69+ companies, 3 unicorns. Portfolio: Starface, Exponent Beauty, Kinship (clean skincare), Jupiter (scalp care at Target 1,100+ stores), Snif, BlackWolf (men\'s grooming), Grüns. Jupiter Target distribution proves comfort with hair/scalp health + mass retail.', notes: 'TIER 1. Subscription-model thesis = perfect fit for FB refills. Jupiter at Target = distribution parallel. $75M Fund III (2025).', timeline: [], created: new Date().toISOString() },
+    { firm: 'Melitas Ventures', contact: 'Alex Malamatinas', email: '', stage: 'Seed–Series A', checkSize: '$1M–$5M', status: 'new', nda: 'none', owner: '', website: 'https://melitasventures.com', linkedin: '', thesis: 'Fund III = $120M (2025), explicitly expanding into beauty/wellness. 40+ companies across 3 funds. Portfolio: Hanni (body care), Jupiter (scalp care), Veracity (hormonal skincare), Olipop (unicorn), Magic Spoon, Kin Euphorics, Lemon Perfect. Jupiter and Hanni are brands where water quality affects product outcomes. Veracity science-backed approach mirrors FB clinical data story.', notes: 'TIER 1. Fund III expanding into beauty = timely. Jupiter/Hanni = water-quality impact. $120M fund.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Waldencast Ventures', contact: 'Michel Brousset', email: '', stage: 'Early-stage', checkSize: '~$4M–$5M', status: 'new', nda: 'none', owner: '', website: 'https://waldencastventures.com', linkedin: 'https://www.linkedin.com/company/waldencast/', thesis: 'Permanent capital beauty incubator/investor. Founded by Michel Brousset (former L\'Oréal NA Group President) and Mazdack Rassi (Milk Makeup co-founder). Portfolio: Kjaer Weis (clean organic makeup), Costa Brazil, Glaze Hair (launched in Target 2025), Sallve (Brazilian DTC skincare), Revea (precision skincare), The Nue Co. (supplements). Glaze Hair Target launch = direct retail adjacency. Brousset\'s L\'Oréal pedigree = strategic beauty connections. Deep operational support.', notes: 'TIER 1. Glaze Hair at Target = retail adjacency. Michel Brousset = ex-L\'Oréal Group President. Incubation model = deep support.', timeline: [], created: new Date().toISOString() },
+    { firm: 'XRC Ventures', contact: 'Diana Melencio', email: '', stage: 'Seed–Series A', checkSize: '$250K–$1M (Accel); Seed–A (Brand Capital)', status: 'new', nda: 'none', owner: '', website: 'https://xrcventures.com', linkedin: '', thesis: 'Multi-fund structure: Accelerator + Opportunity + Brand Capital Fund. 140+ investments, 59 exits. Corporate partners include Estée Lauder Companies and Mastercard. Portfolio: Solawave (beauty devices/hardware), Billie (personal care, exited to Edgewell), Naked Sundays (SPF skincare). Diana Melencio leads beauty. Solawave beauty hardware = analogous to FB filter hardware. Billie exit = strategic CPG exit track record. SHOPLINE Brand Builder Grant ($20K–$120K) = non-dilutive capital.', notes: 'TIER 1. Solawave beauty hardware = FB hardware parallel. Billie exit to Edgewell. Estée Lauder as LP. Brand Capital Fund for beauty.', timeline: [], created: new Date().toISOString() },
+    { firm: 'CircleUp Growth Partners', contact: 'Ryan Caldbeck', email: '', stage: 'Series A–B', checkSize: '$1M–$15M rev targets', status: 'new', nda: 'none', owner: '', website: 'https://circleup.com', linkedin: '', thesis: '$125M fund (oversubscribed). Proprietary Helio ML platform evaluates 1.3M+ consumer businesses algorithmically — FB retail data and clinical evidence would score well. Portfolio: HUM Nutrition (ingestible beauty), Kosas (clean color at Ulta/Sephora), Supergoop! (suncare). LPs include Tevya Finger (Bumble and bumble co-founder) and John Foraker (Annie\'s Homegrown). Data-driven evaluation approach.', notes: 'TIER 1. Algorithmic evaluation = FB clinical data advantage. Kosas/HUM = clinical beauty + retail. $125M fund.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Curate Capital', contact: 'Carrie Colbert', email: '', stage: 'Seed', checkSize: '$250K–$1.5M', status: 'new', nda: 'none', owner: '', website: 'https://curate.capital', linkedin: '', thesis: 'Fund I = $15M (50% oversubscribed). "Influential Investing" model — LP network of influencers with 10M+ combined followers. ~80% of investors are women. Portfolio: Live Tinted (inclusive beauty, sold at Ulta, 1M+ units 2025), Curie (personal care), Glamhive. Backs female-led CPG brands exclusively. Live Tinted Ulta success makes Curate an informed partner for FB Ulta strategy.', notes: 'TIER 2. Live Tinted at Ulta = informed Ulta partner. Influencer LP network = amplification. Female-led CPG focus.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Female Founders Fund', contact: 'Anu Duggal', email: '', stage: 'Seed', checkSize: '$500K–$750K', status: 'new', nda: 'none', owner: '', website: 'https://femalefoundersfund.com', linkedin: '', thesis: '~$125M across 5 funds. Fund IV = $29M (Dec 2025). LPs include Melinda French Gates\' Pivotal Ventures and Goldman Sachs. 17 exits total including Rent the Runway IPO. Portfolio: Ceremonia (Latina haircare at Sephora), Cay Skin (Winnie Harlow), Billie (razors, exited to P&G), ELOQUII (exited to Walmart). Ceremonia haircare + Billie personal care = relevant parallels.', notes: 'TIER 2. Strong exits (Billie to P&G, ELOQUII to Walmart). Ceremonia haircare. Smaller checks best as co-investor.', timeline: [], created: new Date().toISOString() },
+    { firm: 'SoGal Ventures', contact: 'Pocket Sun', email: '', stage: 'Pre-seed/Seed', checkSize: '$2M–$3M', status: 'new', nda: 'none', owner: '', website: 'https://sogalventures.com', linkedin: '', thesis: 'First female-led VC fund focused on diverse founders. 2 funds, 62+ investments. Portfolio: Function of Beauty (personalized haircare), Winky Lux, Ceremonia, indē wild, HelloAva (data-driven skincare), Everlywell. Function of Beauty personalized haircare model + HelloAva data-driven skincare approach parallel FB clinical positioning. Strong minority founder track record.', notes: 'TIER 2. Function of Beauty + HelloAva = personalized/data-driven beauty. Diverse founder focus aligns with Xin\'s story.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Halogen Ventures', contact: 'Jesse Draper', email: '', stage: 'Pre-seed–Series A', checkSize: 'Pre-seed–Series A range', status: 'new', nda: 'none', owner: '', website: 'https://halogenvc.com', linkedin: 'https://www.linkedin.com/company/halogen-ventures', thesis: 'Fund III = $30M (June 2025). Portfolio valued at $15B+. 100% female-founded consumer tech. 6 unicorns including Everlywell ($3.5B). 100+ investments. Portfolio: YSE Beauty (Molly Sims, $15M Series A 2025), WTHN (acupuncture/wellness hardware), Tinted (clean beauty). Exits: ThisIsL (acquired by P&G), ELOQUII (acquired by Walmart). WTHN wellness hardware parallels FB physical product + wellness positioning. Jesse Draper is 4th-generation VC.', notes: 'TIER 2. WTHN = wellness hardware parallel. YSE Beauty recent $15M Series A. $15B+ portfolio value. 100% female-founded.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Fearless Fund', contact: 'Arian Simone', email: '', stage: 'Pre-seed–Series A', checkSize: 'Pre-seed–Series A range', status: 'new', nda: 'none', owner: '', website: 'https://www.fearless.fund', linkedin: '', thesis: 'First VC fund built by women of color for women of color. Fund I = $25.8M, Fund II oversubscribed. Corporate partners: Bank of America, Costco, Mastercard, JPMorgan Chase. Portfolio: Bread Beauty Supply (curly haircare, exited April 2025), Range Beauty, The Lip Bar, Brown Girl Jane, Live Tinted, Oui the People, Thirteen Lune (acquired). Beauty-heavy portfolio with multiple brands at major retailers. NOTE: May require WOC co-founder.', notes: 'TIER 2. Beauty-heavy portfolio. Multiple retail exits. Check WOC co-founder requirement for eligibility.', timeline: [], created: new Date().toISOString() },
+    { firm: 'HighPost Capital (HIPstr)', contact: 'David Moross', email: '', stage: 'Seed–Series A', checkSize: '$3M–$10M', status: 'new', nda: 'none', owner: '', website: 'https://highpost.com', linkedin: '', thesis: '~$900M+ AUM. HIPstr is dedicated early-stage arm with 7+ investments. Co-founded by Mark Bezos. Portfolio: Caldera + Lab (premium men\'s skincare, $6M Series A), Front Row Group (beauty e-commerce), Equip Foods, Magic Spoon. Caldera + Lab clinical skincare positioning mirrors FB science-backed approach. Mark Bezos brings significant media and consumer brand visibility.', notes: 'TIER 2. Caldera + Lab = clinical skincare parallel. Mark Bezos = media visibility. HIPstr = dedicated early-stage arm.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Fab Co-Creation Studio Ventures', contact: 'Odile Roujol', email: '', stage: 'Pre-seed/Seed', checkSize: '$50K–$500K', status: 'new', nda: 'none', owner: '', website: 'https://fabcocreationstudio.com', linkedin: '', thesis: 'Former CEO of Lancôme International. Fund I = $10M, Fund II in second close. 23 of 25 portfolio companies led by women or first/second-gen immigrants. Portfolio: Bubble Skincare (first investor), K18 Hair (exited to Unilever ~$500–600M), Thirteen Lune, HelloBiome, Veracity, DAMDAM Tokyo, Cleverman. 10,000+ founder/funder community across 15 global chapters. Small checks but outsized strategic value — best as syndication partner or strategic advisor alongside lead investor.', notes: 'TIER 2. K18 + Bubble first investor = early-stage eye. Ex-Lancôme CEO. Small checks but massive network value.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Harlem Capital', contact: 'Henri Pierre-Jacques', email: '', stage: 'Pre-seed/Seed', checkSize: '$1M–$2.5M', status: 'new', nda: 'none', owner: '', website: 'https://harlem.capital', linkedin: 'https://www.linkedin.com/company/harlemcapital', thesis: 'Mission: invest in 1,000 diverse founders over 20 years. Fund II = $134M, Fund III raising ~$150M. 61% of Fund I = Black/Latino-led, 43% women-only-led. Pioneered "Culture Carry" (founders share in fund carry). Portfolio: Beauty Bakerie (cruelty-free cosmetics), Wellory, Shine. Strong diversity focus with institutional-scale capital ($134M+).', notes: 'TIER 2. $134M+ institutional scale. Diversity-first thesis. Potential fit if emphasizing Xin\'s TCM/immigrant founder story.', timeline: [], created: new Date().toISOString() },
+    { firm: 'MarcyPen Capital Partners', contact: 'Larry Marcus', email: '', stage: 'Seed–Growth', checkSize: '$1M–$10M', status: 'new', nda: 'none', owner: '', website: 'https://pendulumholdings.com', linkedin: '', thesis: 'Marcy Venture Partners (JAY-Z) + Pendulum merged Sept 2024. ~$900M combined AUM. 5 unicorns. Portfolio: Adwoa Beauty (textured haircare, Sephora-exclusive), Therabody (wellness devices), Madison Reed (hair color), Savage X Fenty. Adwoa haircare + Therabody wellness hardware = natural conversation points. Significant cultural cachet and media amplification potential.', notes: 'TIER 2. JAY-Z backed. Therabody = wellness hardware. Adwoa = haircare. $900M AUM. Major cultural amplification.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Springdale Ventures', contact: 'Genevieve Gilbreath', email: '', stage: 'Seed–Series A', checkSize: '$250K–$2M', status: 'new', nda: 'none', owner: '', website: 'https://springdaleventures.com', linkedin: '', thesis: 'Austin-based. Fund II = $40M. 49 investments. Both co-founders are former consumer brand operators. Portfolio: Jupiter (scalp/hair care, 1,100+ Target stores), TBD Health, Feastables, GOODLES. Jupiter Target distribution directly parallels FB Target strategy — Springdale understands what it takes to scale a wellness brand in mass retail.', notes: 'TIER 2. Jupiter at 1,100+ Target stores = direct distribution parallel. Operator-founders. $40M Fund II.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Joyance Partners', contact: 'Michael Edelhart', email: '', stage: 'Pre-seed–Series A', checkSize: 'Pre-seed–Series A range', status: 'new', nda: 'none', owner: '', website: 'https://joyancepartners.com', linkedin: '', thesis: '~$1B AUM. 188+ companies invested. Thesis: science of happiness applied to consumer products. Portfolio: JOYA (employer-benefit skin health platform), Conserving Beauty (solutions-based skincare), DermBiont (skin disease therapeutics), Phyla (probiotic skincare), 10Beauty (robotic manicure). JOYA skin health focus + DermBiont dermatological science directly intersect with FB clinical skin data. Phyla microbiome = skin-barrier conversation where water quality matters.', notes: 'TIER 2. JOYA/DermBiont/Phyla = skin science portfolio. 188+ investments. $1B AUM. Science-of-happiness thesis.', timeline: [], created: new Date().toISOString() },
+  ];
+  seed.forEach((s, i) => { s.id = 'inv_' + Date.now() + '_' + i; });
+  investors = seed;
+  saveData(investors);
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// RENDERING
+// ════════════════════════════════════════════════════════════════
+function renderCards() {
+  const container = document.getElementById('cardsContainer');
+  const search = document.getElementById('searchInput').value.toLowerCase();
+
+  let filtered = investors.filter(inv => {
+    if (currentTab !== 'all' && currentTab !== 'archived') return inv.status === currentTab && inv.status !== 'archived' && inv.status !== 'declined';
+    if (currentTab === 'archived') return inv.status === 'archived' || inv.status === 'declined';
+    return inv.status !== 'archived' && inv.status !== 'declined';
+  });
+
+  if (search) {
+    filtered = filtered.filter(inv =>
+      inv.firm.toLowerCase().includes(search) ||
+      (inv.contact || '').toLowerCase().includes(search) ||
+      (inv.notes || '').toLowerCase().includes(search) ||
+      (inv.thesis || '').toLowerCase().includes(search) ||
+      (inv.owner || '').toLowerCase().includes(search)
+    );
+  }
+
+  if (sortAsc) filtered.sort((a, b) => a.firm.localeCompare(b.firm));
+  else filtered.sort((a, b) => b.firm.localeCompare(a.firm));
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 15s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg>
+        <h3>No leads here</h3>
+        <p>${currentTab === 'all' ? 'Tap + to add your first investor lead.' : 'No leads in this stage yet.'}</p>
+      </div>`;
+    updateCounts();
+    return;
+  }
+
+  container.innerHTML = filtered.map(inv => {
+    const hasLinks = inv.website || inv.linkedin;
+    return `
+    <div class="investor-card" onclick="openPanel('view', '${inv.id}')">
+      <div class="card-header">
+        <div>
+          <div class="card-firm">${esc(inv.firm)}</div>
+          ${inv.contact ? `<div class="card-contact">${esc(inv.contact)}</div>` : ''}
+        </div>
+        <span class="card-status status-${inv.status}">${statusLabel(inv.status)}</span>
+      </div>
+      <div class="card-meta">
+        ${inv.checkSize ? `<span class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>${esc(inv.checkSize)}</span>` : ''}
+        ${inv.owner ? `<span class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${esc(inv.owner)}</span>` : ''}
+        <span class="card-nda-badge nda-${inv.nda || 'none'}">${inv.nda === 'signed' ? '✓ NDA' : inv.nda === 'pending' ? '⏳ NDA' : ''}</span>
+      </div>
+      ${hasLinks ? `<div class="card-links" onclick="event.stopPropagation()">
+        ${inv.website ? `<a class="card-link" href="${esc(inv.website)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>Website</a>` : ''}
+        ${inv.linkedin ? `<a class="card-link" href="${esc(inv.linkedin)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-4 0v7h-4v-7a6 6 0 016-6zM2 9h4v12H2zM4 6a2 2 0 100-4 2 2 0 000 4z"/></svg>LinkedIn</a>` : ''}
+      </div>` : ''}
+      ${inv.thesis ? `<div class="card-thesis">${esc(inv.thesis)}</div>` : ''}
+      ${inv.notes ? `<div class="card-note">${esc(inv.notes)}</div>` : ''}
+    </div>
+  `}).join('');
+
+  updateCounts();
+}
+
+function updateCounts() {
+  const active = investors.filter(i => !['archived','declined'].includes(i.status));
+  const all = active.length;
+  document.getElementById('statTotal').textContent = investors.length;
+  document.getElementById('statActive').textContent = all;
+  document.getElementById('statNda').textContent = investors.filter(i => i.nda === 'pending' || i.status === 'nda-sent').length;
+  document.getElementById('statMeetings').textContent = investors.filter(i => i.status === 'meeting').length;
+
+  document.getElementById('countAll').textContent = all;
+  document.getElementById('countNew').textContent = investors.filter(i => i.status === 'new').length;
+  document.getElementById('countContacted').textContent = investors.filter(i => i.status === 'contacted').length;
+  document.getElementById('countMeeting').textContent = investors.filter(i => i.status === 'meeting').length;
+  document.getElementById('countDd').textContent = investors.filter(i => i.status === 'due-diligence').length;
+  document.getElementById('countNda').textContent = investors.filter(i => i.status === 'nda-sent').length;
+  document.getElementById('countTs').textContent = investors.filter(i => i.status === 'term-sheet').length;
+  document.getElementById('countArchived').textContent = investors.filter(i => ['archived','declined'].includes(i.status)).length;
+}
+
+function statusLabel(s) {
+  const map = { 'new':'New', 'contacted':'Contacted', 'meeting':'Meeting', 'due-diligence':'DD', 'nda-sent':'NDA Sent', 'term-sheet':'Term Sheet', 'closed':'Closed', 'archived':'Archived', 'declined':'Declined' };
+  return map[s] || s;
+}
+
+function esc(str) {
+  if (!str) return '';
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// TABS & SEARCH
+// ════════════════════════════════════════════════════════════════
+function setTab(tab, btn) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCards();
+}
+
+function toggleSort(btn) {
+  sortAsc = !sortAsc;
+  btn.textContent = sortAsc ? 'A–Z' : 'Z–A';
+  btn.classList.toggle('active', !sortAsc);
+  renderCards();
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// SLIDE PANEL
+// ════════════════════════════════════════════════════════════════
+function openPanel(mode, id) {
+  const panel = document.getElementById('slidePanel');
+  const overlay = document.getElementById('panelOverlay');
+  const body = document.getElementById('panelBody');
+  const footer = document.getElementById('panelFooter');
+  const title = document.getElementById('panelTitle');
+  const quickUpdate = document.getElementById('quickUpdate');
+
+  if (mode === 'new') {
+    editingId = null;
+    title.textContent = 'New Lead';
+    body.innerHTML = buildForm({});
+    footer.innerHTML = `<button class="btn btn-primary" onclick="saveLead()">Add Lead</button>`;
+    quickUpdate.classList.remove('visible');
+  } else {
+    const inv = investors.find(i => i.id === id);
+    if (!inv) return;
+    editingId = inv.id;
+    title.textContent = inv.firm;
+    body.innerHTML = buildForm(inv) + buildTimeline(inv);
+    const isProfiled = !!inv.profiledAt;
+    const researchLabel = isProfiled ? '↻ Re-research' : '🔍 Research Firm';
+    footer.innerHTML = `
+      <button class="btn btn-danger btn-sm" onclick="archiveLead('${inv.id}')" style="flex-shrink:0;">${inv.status === 'archived' ? 'Delete' : 'Archive'}</button>
+      <button class="btn btn-secondary btn-sm" onclick="researchFirm('${inv.id}')" style="flex-shrink:0;" title="Use AI to research this firm's investment profile">${researchLabel}</button>
+      <button class="btn btn-primary" onclick="saveLead()">Save Changes</button>
+    `;
+    quickUpdate.classList.add('visible');
+  }
+
+  panel.classList.add('open');
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePanel() {
+  document.getElementById('slidePanel').classList.remove('open');
+  document.getElementById('panelOverlay').classList.remove('open');
+  document.getElementById('quickUpdate').classList.remove('visible');
+  document.body.style.overflow = '';
+  editingId = null;
+}
+
+function buildForm(inv) {
+  const members = settings.teamMembers.split(',').map(m => m.trim()).filter(Boolean);
+  // Default owner to current user for new leads
+  const defaultOwner = inv.owner || (currentUser ? (currentUser.name?.split(' ')[0] || currentUser.email?.split('@')[0]) : '');
+  const ownerOptions = members.map(m => `<option value="${m}" ${defaultOwner === m ? 'selected':''}>${m}</option>`).join('');
+
+  // External links bar (only shown when editing an existing lead)
+  const hasLinks = inv.website || inv.linkedin;
+  const linksBar = hasLinks ? `
+    <div class="panel-links">
+      ${inv.website ? `<a class="panel-link" href="${esc(inv.website)}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>Website</a>` : ''}
+      ${inv.linkedin ? `<a class="panel-link" href="${esc(inv.linkedin)}" target="_blank" rel="noopener" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-4 0v7h-4v-7a6 6 0 016-6zM2 9h4v12H2zM4 6a2 2 0 100-4 2 2 0 000 4z"/></svg>LinkedIn</a>` : ''}
+    </div>` : '';
+
+  // Thesis summary block (only shown when editing and thesis exists)
+  const thesisBlock = inv.thesis ? `
+    <div class="thesis-block">
+      <div class="thesis-block-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2zM22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+        Investment Strategy
+      </div>
+      <div class="thesis-block-text">${esc(inv.thesis)}</div>
+    </div>` : '';
+
+  // Email compose bar (only when viewing an existing lead)
+  const emailBar = inv.id ? `
+    <div class="email-compose-bar">
+      <button class="email-compose-btn" onclick="composeQuickEmail('${inv.id || ''}')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg>
+        Email in Gmail
+      </button>
+      <button class="email-tpl-btn" onclick="openTemplatesForInvestor('${inv.id || ''}')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+        Templates
+      </button>
+    </div>` : '';
+
+  return `
+    ${linksBar}
+    ${emailBar}
+    ${thesisBlock}
+    <div class="form-group">
+      <label class="form-label">Firm Name</label>
+      <input class="form-input" id="fFirm" value="${esc(inv.firm || '')}" placeholder="e.g. True Beauty Ventures">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Contact Name</label>
+        <input class="form-input" id="fContact" value="${esc(inv.contact || '')}" placeholder="Primary contact">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" id="fEmail" type="email" value="${esc(inv.email || '')}" placeholder="email@firm.com">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Website</label>
+        <input class="form-input" id="fWebsite" type="url" value="${esc(inv.website || '')}" placeholder="https://firmname.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">LinkedIn</label>
+        <input class="form-input" id="fLinkedin" type="url" value="${esc(inv.linkedin || '')}" placeholder="https://linkedin.com/company/...">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Stage</label>
+        <select class="form-select" id="fStatus">
+          <option value="new" ${inv.status==='new'?'selected':''}>New Lead</option>
+          <option value="contacted" ${inv.status==='contacted'?'selected':''}>Contacted</option>
+          <option value="meeting" ${inv.status==='meeting'?'selected':''}>Meeting Set</option>
+          <option value="due-diligence" ${inv.status==='due-diligence'?'selected':''}>Due Diligence</option>
+          <option value="nda-sent" ${inv.status==='nda-sent'?'selected':''}>NDA Sent</option>
+          <option value="term-sheet" ${inv.status==='term-sheet'?'selected':''}>Term Sheet</option>
+          <option value="closed" ${inv.status==='closed'?'selected':''}>Closed</option>
+          <option value="declined" ${inv.status==='declined'?'selected':''}>Declined</option>
+          <option value="archived" ${inv.status==='archived'?'selected':''}>Archived</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">NDA Status</label>
+        <select class="form-select" id="fNda">
+          <option value="none" ${inv.nda==='none'?'selected':''}>No NDA</option>
+          <option value="pending" ${inv.nda==='pending'?'selected':''}>Pending Signature</option>
+          <option value="signed" ${inv.nda==='signed'?'selected':''}>Signed</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Check Size</label>
+        <input class="form-input" id="fCheckSize" value="${esc(inv.checkSize || '')}" placeholder="$2–5M">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Owner</label>
+        <select class="form-select" id="fOwner">
+          <option value="">Unassigned</option>
+          ${ownerOptions}
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Investment Stage</label>
+      <input class="form-input" id="fStage" value="${esc(inv.stage || '')}" placeholder="e.g. Seed–Series A">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Investment Strategy / Thesis</label>
+      <textarea class="form-textarea" id="fThesis" style="min-height:100px" placeholder="Firm's investment focus, portfolio highlights, key partners, sector expertise...">${esc(inv.thesis || '')}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Internal Notes</label>
+      <textarea class="form-textarea" id="fNotes" placeholder="Our strategy, relationship status, key intel...">${esc(inv.notes || '')}</textarea>
+    </div>
+  `;
+}
+
+function buildTimeline(inv) {
+  const items = (inv.timeline || []).map(t => `
+    <div class="timeline-item">
+      <div class="timeline-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/></svg></div>
+      <div>
+        <div class="timeline-content">${esc(t.text)}</div>
+        <div class="timeline-date">${new Date(t.date).toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' })}${t.by ? ' · ' + esc(t.by) : ''}</div>
+      </div>
+    </div>
+  `).join('');
+
+  return `
+    <div class="timeline">
+      <div class="timeline-header">Activity Timeline</div>
+      ${items || '<div style="font-size:13px;color:var(--text-secondary);padding:8px 0;">No activity yet. Add a quick note below.</div>'}
+    </div>
+  `;
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// CRUD
+// ════════════════════════════════════════════════════════════════
+function saveLead() {
+  const firm = document.getElementById('fFirm').value.trim();
+  if (!firm) { toast('Firm name is required', 'error'); return; }
+
+  const data = {
+    firm,
+    contact: document.getElementById('fContact').value.trim(),
+    email: document.getElementById('fEmail').value.trim(),
+    website: document.getElementById('fWebsite').value.trim(),
+    linkedin: document.getElementById('fLinkedin').value.trim(),
+    status: document.getElementById('fStatus').value,
+    nda: document.getElementById('fNda').value,
+    checkSize: document.getElementById('fCheckSize').value.trim(),
+    owner: document.getElementById('fOwner').value,
+    stage: document.getElementById('fStage').value.trim(),
+    thesis: document.getElementById('fThesis').value.trim(),
+    notes: document.getElementById('fNotes').value.trim(),
+  };
+
+  if (editingId) {
+    const idx = investors.findIndex(i => i.id === editingId);
+    if (idx > -1) {
+      const oldStatus = investors[idx].status;
+      investors[idx] = { ...investors[idx], ...data };
+      if (oldStatus !== data.status) {
+        addTimelineEntry(editingId, `Status changed from ${statusLabel(oldStatus)} → ${statusLabel(data.status)}`);
+        notifySlack(`📊 *${firm}* moved to *${statusLabel(data.status)}*`);
+      }
+    }
+    toast('Lead updated');
+  } else {
+    const newInv = {
+      ...data,
+      id: 'inv_' + Date.now(),
+      timeline: [],
+      created: new Date().toISOString()
+    };
+    addTimelineEntry(null, 'Lead created', newInv);
+    investors.push(newInv);
+    notifySlack(`🆕 New investor lead added: *${firm}*${data.contact ? ' (Contact: ' + data.contact + ')' : ''}`);
+    toast('Lead added');
+
+    // Auto-profile if website provided and thesis empty
+    if (data.website && !data.thesis && serverStatus.anthropic) {
+      autoProfileInvestor(newInv.id);
+    }
+  }
+
+  saveData(investors);
+  renderCards();
+  closePanel();
+}
+
+function archiveLead(id) {
+  const inv = investors.find(i => i.id === id);
+  if (!inv) return;
+
+  if (inv.status === 'archived') {
+    if (confirm(`Permanently delete ${inv.firm}?`)) {
+      investors = investors.filter(i => i.id !== id);
+      saveData(investors);
+      renderCards();
+      closePanel();
+      toast('Lead deleted');
+    }
+    return;
+  }
+
+  inv.status = 'archived';
+  addTimelineEntry(id, 'Archived — moved to non-viable');
+  notifySlack(`🗄️ *${inv.firm}* archived (non-viable)`);
+  saveData(investors);
+  renderCards();
+  closePanel();
+  toast(`${inv.firm} archived`);
+}
+
+function addTimelineEntry(id, text, target) {
+  const entry = { text, date: new Date().toISOString(), by: settings.teamMembers.split(',')[0]?.trim() || 'System' };
+  if (target) { target.timeline = [entry, ...(target.timeline || [])]; return; }
+  const inv = investors.find(i => i.id === id);
+  if (inv) inv.timeline = [entry, ...(inv.timeline || [])];
+}
+
+function addQuickNote() {
+  const input = document.getElementById('quickInput');
+  const text = input.value.trim();
+  if (!text || !editingId) return;
+
+  addTimelineEntry(editingId, text);
+  saveData(investors);
+  input.value = '';
+  toast('Note added');
+
+  // Re-render panel timeline
+  const inv = investors.find(i => i.id === editingId);
+  if (inv) {
+    document.getElementById('panelTitle').textContent = inv.firm;
+    document.getElementById('panelBody').innerHTML = buildForm(inv) + buildTimeline(inv);
+  }
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// AUTO-PROFILING ENGINE (via Netlify Function → Anthropic API)
+// ════════════════════════════════════════════════════════════════
+let profilingQueue = new Set();
+
+async function autoProfileInvestor(id) {
+  const inv = investors.find(i => i.id === id);
+  if (!inv || profilingQueue.has(id)) return;
+  if (!serverStatus.anthropic) {
+    toast('AI profiling not configured — admin needs to set ANTHROPIC_API_KEY', 'error');
+    return;
+  }
+
+  profilingQueue.add(id);
+  toast(`🔍 Researching ${inv.firm}...`);
+  addTimelineEntry(id, '🔍 Auto-profile research started');
+  saveData(investors);
+  renderCards();
+
+  try {
+    const response = await fetch('/api/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ firm: inv.firm, website: inv.website || '', linkedin: inv.linkedin || '' })
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error?.message || errData.error || `API error ${response.status}`);
+    }
+
+    const profile = await response.json();
+
+    // Build the full thesis string from structured data
+    const parts = [];
+    if (profile.thesis) parts.push(profile.thesis);
+    if (profile.portfolio) parts.push(`Portfolio: ${profile.portfolio}.`);
+    if (profile.keyPeople) parts.push(`Key people: ${profile.keyPeople}.`);
+    if (profile.aum) parts.push(`AUM/Fund size: ${profile.aum}.`);
+    if (profile.recentActivity) parts.push(`Recent activity: ${profile.recentActivity}.`);
+    if (profile.beautyRelevance) parts.push(`Filterbaby relevance: ${profile.beautyRelevance}.`);
+    if (profile.waterConflict) parts.push(`Water filter conflict: ${profile.waterConflict}.`);
+
+    // Update the investor record
+    const freshInv = investors.find(i => i.id === id);
+    if (freshInv) {
+      freshInv.thesis = parts.join(' ');
+      if (profile.stage && !freshInv.stage) freshInv.stage = profile.stage;
+      if (profile.checkSize && !freshInv.checkSize) freshInv.checkSize = profile.checkSize;
+      if (profile.keyPeople && !freshInv.contact) {
+        const firstPerson = profile.keyPeople.split(',')[0]?.split('(')[0]?.trim();
+        if (firstPerson && firstPerson.length < 40) freshInv.contact = firstPerson;
+      }
+      freshInv.profiledAt = new Date().toISOString();
+      addTimelineEntry(id, `✅ Auto-profile complete — ${profile.beautyRelevance || 'research done'}`);
+      saveData(investors);
+      renderCards();
+      toast(`✅ ${freshInv.firm} profiled`, 'success');
+    }
+
+  } catch (err) {
+    console.error('Auto-profile failed:', err);
+    addTimelineEntry(id, `❌ Auto-profile failed: ${err.message}`);
+    saveData(investors);
+    renderCards();
+    toast(`Profile failed: ${err.message}`, 'error');
+  } finally {
+    profilingQueue.delete(id);
+  }
+}
+
+// Manual trigger from panel
+function researchFirm(id) {
+  const inv = investors.find(i => i.id === id);
+  if (!inv) return;
+
+  if (!serverStatus.anthropic) {
+    toast('AI profiling not configured — admin needs to set ANTHROPIC_API_KEY', 'error');
+    return;
+  }
+
+  if (!inv.website && !inv.firm) {
+    toast('Add a website URL or firm name first', 'error');
+    return;
+  }
+
+  if (profilingQueue.has(id)) {
+    toast('Research already in progress...'); 
+    return;
+  }
+
+  // Save any pending form changes first
+  const firmField = document.getElementById('fFirm');
+  if (firmField) {
+    inv.firm = firmField.value.trim() || inv.firm;
+    inv.website = document.getElementById('fWebsite')?.value.trim() || inv.website;
+    inv.linkedin = document.getElementById('fLinkedin')?.value.trim() || inv.linkedin;
+    saveData(investors);
+  }
+
+  closePanel();
+  autoProfileInvestor(id);
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// INTEGRATIONS (all server-side)
+// ════════════════════════════════════════════════════════════════
+
+async function notifySlack(text) {
+  if (!serverStatus.slack) return;
+  try { await fetch('/api/slack', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) }); } catch (e) { console.warn('Slack failed:', e); }
+}
+
+async function checkPandaDocStatus(email) {
+  if (!serverStatus.pandadoc || !email) return null;
+  try { const r = await fetch(`/api/pandadoc?email=${encodeURIComponent(email)}`); if (r.ok) { const d = await r.json(); return d.results || []; } } catch (e) { console.warn('PandaDoc failed:', e); }
+  return null;
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// EXPORT TO XLSX (client-side via SheetJS)
+// ════════════════════════════════════════════════════════════════
+async function exportToXlsx() {
+  toast('Generating Excel file...');
+  // Load SheetJS from CDN if not already loaded
+  if (!window.XLSX) {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+  const headers = ['Firm','Contact','Email','Website','LinkedIn','Status','NDA','Check Size','Stage','Owner','Investment Strategy','Notes','Created','Last Activity'];
+  const rows = investors.map(inv => [
+    inv.firm, inv.contact, inv.email, inv.website || '', inv.linkedin || '',
+    statusLabel(inv.status), inv.nda, inv.checkSize, inv.stage, inv.owner,
+    inv.thesis || '', inv.notes, inv.created, inv.timeline?.[0]?.date || ''
+  ]);
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  // Auto-width columns
+  ws['!cols'] = headers.map((h, i) => ({ wch: Math.max(h.length, ...rows.map(r => (r[i]||'').toString().length).slice(0, 10)) + 2 }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Pipeline');
+  XLSX.writeFile(wb, `filterbaby_pipeline_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('Excel exported', 'success');
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// SETTINGS (read-only server status)
+// ════════════════════════════════════════════════════════════════
+function openSettings() {
+  const modal = document.getElementById('settingsModal');
+  const body = document.getElementById('settingsBody');
+
+  body.innerHTML = `
+    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;line-height:1.5;">
+      Integrations are managed by your admin via Netlify environment variables. Status refreshes on page load.
+    </div>
+
+    <div class="integration-item">
+      <div class="integration-icon" style="background:#F0E8F5;">🧠</div>
+      <div class="integration-info">
+        <div class="integration-name">AI Auto-Profiling</div>
+        <div class="integration-desc">Claude + web search firm research</div>
+      </div>
+      <span class="integration-status ${serverStatus.anthropic ? 'int-connected' : 'int-disconnected'}">${serverStatus.anthropic ? 'Active' : 'Not Set'}</span>
+    </div>
+
+    <div class="integration-item">
+      <div class="integration-icon" style="background:#F5E8F0;">#</div>
+      <div class="integration-info">
+        <div class="integration-name">Slack Notifications</div>
+        <div class="integration-desc">Pipeline updates to your channel</div>
+      </div>
+      <span class="integration-status ${serverStatus.slack ? 'int-connected' : 'int-disconnected'}">${serverStatus.slack ? 'Active' : 'Not Set'}</span>
+    </div>
+
+    <div class="integration-item">
+      <div class="integration-icon" style="background:#E8F0F5;">📝</div>
+      <div class="integration-info">
+        <div class="integration-name">PandaDoc NDA Tracking</div>
+        <div class="integration-desc">Check NDA signing status by email</div>
+      </div>
+      <span class="integration-status ${serverStatus.pandadoc ? 'int-connected' : 'int-disconnected'}">${serverStatus.pandadoc ? 'Active' : 'Not Set'}</span>
+    </div>
+
+    <div class="integration-item">
+      <div class="integration-icon" style="background:#E8F5E8;">🔐</div>
+      <div class="integration-info">
+        <div class="integration-name">Google Workspace Auth</div>
+        <div class="integration-desc">@filterbaby.com sign-in</div>
+      </div>
+      <span class="integration-status ${serverStatus.auth ? 'int-connected' : 'int-disconnected'}">${serverStatus.auth ? 'Active' : 'Not Set'}</span>
+    </div>
+
+    ${currentUser ? `
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+      <div style="font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Signed in as</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        ${currentUser.picture ? `<img src="${currentUser.picture}" style="width:32px;height:32px;border-radius:50%;">` : ''}
+        <div>
+          <div style="font-weight:600;font-size:14px;">${esc(currentUser.name)}</div>
+          <div style="font-size:12px;color:var(--text-secondary);">${esc(currentUser.email)}</div>
+        </div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="window.location='/api/auth/logout'" style="margin-top:10px;">Sign out</button>
+    </div>` : ''}
+
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+      <div class="form-group">
+        <label class="form-label">Team Members (comma-separated)</label>
+        <input class="form-input" id="sTeam" value="${esc(settings.teamMembers)}" placeholder="Andrew, Xin, Lynn">
+      </div>
+    </div>
+  `;
+
+  modal.classList.add('open');
+}
+
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('open');
+}
+
+function saveSettings() {
+  settings.teamMembers = document.getElementById('sTeam').value.trim();
+  saveSettingsData(settings);
+  updateSetupBanner();
+  closeSettings();
+  toast('Settings saved', 'success');
+}
+
+function updateSetupBanner() {
+  const banner = document.getElementById('setupBanner');
+  const parts = [];
+  if (serverStatus.anthropic) parts.push('AI Profiling');
+  if (serverStatus.slack) parts.push('Slack');
+  if (serverStatus.pandadoc) parts.push('PandaDoc');
+  if (parts.length > 0) {
+    banner.className = 'setup-banner connected';
+    banner.querySelector('span').textContent = `Integrations active: ${parts.join(', ')}`;
+  } else {
+    banner.className = 'setup-banner';
+    banner.querySelector('span').textContent = 'No integrations configured — ask admin for setup';
+  }
+}
+
+async function fetchServerStatus() {
+  try {
+    const resp = await fetch('/api/status');
+    if (resp.ok) {
+      serverStatus = await resp.json();
+      updateSetupBanner();
+    }
+  } catch (e) {
+    console.warn('Server status unavailable:', e);
+  }
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// AUTH (Google OAuth via Netlify Functions)
+// ════════════════════════════════════════════════════════════════
+async function checkAuth() {
+  try {
+    const resp = await fetch('/api/auth/me');
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data.authenticated && data.user) {
+        currentUser = data.user;
+        document.getElementById('loginGate').classList.add('hidden');
+        // Update user pill in header
+        const pill = document.getElementById('userPill');
+        const avatarEl = document.getElementById('userAvatar');
+        const nameEl = document.getElementById('userNameLabel');
+        const firstName = currentUser.name?.split(' ')[0] || currentUser.email?.split('@')[0] || '?';
+        nameEl.textContent = firstName;
+        if (currentUser.picture) {
+          avatarEl.outerHTML = `<img class="user-avatar" id="userAvatar" src="${currentUser.picture}" alt="${firstName}">`;
+        } else {
+          avatarEl.textContent = firstName[0].toUpperCase();
+        }
+        pill.title = `Signed in as ${currentUser.email} — click to sign out`;
+        return true;
+      }
+    }
+  } catch (e) {
+    console.warn('Auth check failed:', e);
+  }
+  // Not authenticated — show login gate
+  document.getElementById('loginGate').classList.remove('hidden');
+  return false;
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════════════════════════
+function toast(msg, type = '') {
+  const container = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = `toast ${type ? 'toast-' + type : ''}`;
+  t.innerHTML = msg;
+  container.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// EXPORT / IMPORT
+// ════════════════════════════════════════════════════════════════
+// Export is now handled by exportToXlsx() in the INTEGRATIONS section above
+// Legacy CSV available via console: exportCSV()
+window.exportCSV = function() {
+  const headers = ['Firm','Contact','Email','Website','LinkedIn','Status','NDA','Check Size','Stage','Owner','Investment Strategy','Notes'];
+  const rows = investors.map(i => [i.firm, i.contact, i.email, i.website || '', i.linkedin || '', i.status, i.nda, i.checkSize, i.stage, i.owner, i.thesis || '', i.notes].map(v => `"${(v||'').replace(/"/g,'""')}"`).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'filterbaby_pipeline_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('CSV exported', 'success');
+};
+
+
+// ════════════════════════════════════════════════════════════════
+// EMAIL TEMPLATES ENGINE
+// ════════════════════════════════════════════════════════════════
+const TEMPLATES_KEY = 'fb_email_templates';
+
+const DEFAULT_TEMPLATES = [
+  {
+    id: 'cold_intro',
+    name: 'Cold intro — science-led',
+    category: 'Cold Outreach',
+    subject: 'Filterbaby — water filtration meets clinical skincare (TIME Best Inventions)',
+    body: `Hi {{contact_first}},
+
+I'm reaching out because {{firm}}'s portfolio — particularly {{synergy_brand}} — tells me you understand the intersection of real efficacy and consumer behavior change.
+
+Filterbaby makes faucet and shower filters positioned as skincare infrastructure, not plumbing hardware. We're the only water filtration brand with third-party clinical skin data: 20.61% keratinocyte cell growth, 69.1% wound healing acceleration, and 13.13% moisture increase in a 35-participant European hydration study. TIME recognized us as a Best Invention.
+
+We're currently in Ulta, Target, and Erewhon, with a subscription refill model driving repeat revenue. Our founder Xin Shui is a 3rd-generation Traditional Chinese Medicine practitioner — the brand's origin story is rooted in the idea that clean water is not a luxury, it's the first step in any skincare routine.
+
+We're raising a seed round and I'd love to share more about where we're headed. Would a 20-minute call work for you sometime in the next couple of weeks?
+
+Best,
+{{sender_name}}
+Filterbaby`
+  },
+  {
+    id: 'cold_retail',
+    name: 'Cold intro — retail traction-led',
+    category: 'Cold Outreach',
+    subject: 'Filterbaby — Ulta + Target + Erewhon, raising seed',
+    body: `Hi {{contact_first}},
+
+I noticed {{firm}}'s investment in {{synergy_brand}} — the retail strategy you helped them execute resonates with what we're building at Filterbaby.
+
+We make faucet and shower water filters positioned in the beauty aisle, not the hardware aisle. We're currently stocked at Ulta, Target, and Erewhon, with a subscription refill model. TIME named us a Best Invention, and we're the only water filtration brand with published clinical skin data (in vitro keratinocyte studies + 35-participant European hydration trial).
+
+Our founder Xin Shui is a 3rd-generation TCM practitioner who built the brand on the belief that quality water shouldn't be a luxury. We're raising a seed round to scale retail distribution and clinical research partnerships.
+
+Would you have 20 minutes for a quick call?
+
+Best,
+{{sender_name}}
+Filterbaby`
+  },
+  {
+    id: 'warm_intro',
+    name: 'Warm intro request',
+    category: 'Warm Intro',
+    subject: 'Quick intro request — Filterbaby → {{contact}} at {{firm}}',
+    body: `Hi {{mutual_contact}},
+
+I hope you're doing well. I'm writing to ask if you'd be open to making an introduction to {{contact}} at {{firm}}.
+
+We're raising a seed round for Filterbaby — we make faucet and shower water filters positioned as skincare tools. We have clinical skin data (published in vitro + human studies), TIME Best Inventions recognition, and we're in Ulta, Target, and Erewhon. Our founder Xin Shui is a 3rd-generation TCM practitioner.
+
+{{firm}} seems like a strong fit given their investment in {{synergy_brand}} — we believe water quality is foundational to the entire skincare category they're building around.
+
+Happy to send over a deck or any additional context that would be helpful. No pressure at all if the timing isn't right.
+
+Thank you,
+{{sender_name}}`
+  },
+  {
+    id: 'followup_1',
+    name: 'Follow-up #1 — gentle bump',
+    category: 'Follow-up',
+    subject: 'Re: Filterbaby — following up',
+    body: `Hi {{contact_first}},
+
+Just wanted to circle back on my note from last week. I know your inbox is demanding — happy to keep this brief.
+
+Filterbaby is a water filtration brand with clinical skincare data, currently in Ulta, Target, and Erewhon. We're raising a seed round and I believe there's a natural alignment with {{firm}}'s thesis.
+
+Would a 15-minute call be possible? I can work around your schedule.
+
+Best,
+{{sender_name}}
+Filterbaby`
+  },
+  {
+    id: 'followup_data',
+    name: 'Follow-up #2 — lead with new data',
+    category: 'Follow-up',
+    subject: 'Re: Filterbaby — new clinical data point',
+    body: `Hi {{contact_first}},
+
+Quick update — we recently completed additional clinical testing that I thought might be relevant to your evaluation:
+
+Our shower filter refill demonstrated 126.5% improvement in lipid barrier function in keratinocyte studies, alongside the previously shared 20.61% cell growth and 69.1% wound healing data. No competitor in the water filtration space has anything close to this level of clinical evidence for skin health outcomes.
+
+We're also seeing strong subscription retention on our filter refills — the recurring revenue model continues to perform.
+
+Would love to walk you through the full dataset if you have 15 minutes.
+
+Best,
+{{sender_name}}
+Filterbaby`
+  },
+  {
+    id: 'meeting_request',
+    name: 'Meeting request — post-interest',
+    category: 'Meeting',
+    subject: 'Filterbaby — scheduling our conversation',
+    body: `Hi {{contact_first}},
+
+Great to hear from you — thank you for your interest in Filterbaby.
+
+I'd love to set up a call to walk you through our deck, clinical data, and retail traction. Here's what I can cover in 30 minutes:
+
+- Founder story: Xin Shui's 3rd-generation TCM background and the origin of Filterbaby
+- Clinical evidence: our in vitro and human study results (the only water filter brand with published skin data)
+- Retail traction: Ulta, Target, and Erewhon distribution
+- Business model: hardware + subscription refill economics
+- The raise: use of funds and where we're headed
+
+Are any of these times available?
+{{suggested_times}}
+
+Looking forward to it.
+
+Best,
+{{sender_name}}
+Filterbaby`
+  },
+  {
+    id: 'nda_send',
+    name: 'NDA send',
+    category: 'Due Diligence',
+    subject: 'Filterbaby — mutual NDA for your review',
+    body: `Hi {{contact_first}},
+
+Thank you for moving forward with the diligence process. Attached is a standard mutual NDA for your review.
+
+Once executed, I'll share our detailed financials, unit economics, and clinical research partnership pipeline. Happy to use PandaDoc for e-signature if that's easier — just let me know your preference.
+
+Looking forward to the next step.
+
+Best,
+{{sender_name}}
+Filterbaby`
+  },
+  {
+    id: 'post_meeting',
+    name: 'Post-meeting thank you',
+    category: 'Follow-up',
+    subject: 'Great speaking with you — Filterbaby next steps',
+    body: `Hi {{contact_first}},
+
+Thank you for taking the time to speak with us today. I really appreciated {{firm}}'s perspective on {{topic_discussed}}.
+
+As discussed, I'm attaching:
+- Our investor deck
+- Clinical data summary (in vitro + European hydration study)
+- Retail distribution overview
+
+{{next_steps}}
+
+Please don't hesitate to reach out with any questions. We're excited about the possibility of working with {{firm}}.
+
+Best,
+{{sender_name}}
+Filterbaby`
+  },
+  {
+    id: 'breakup',
+    name: 'Final follow-up — graceful close',
+    category: 'Follow-up',
+    subject: 'Closing the loop — Filterbaby',
+    body: `Hi {{contact_first}},
+
+I've reached out a couple of times and I want to be respectful of your time. If now isn't the right moment for {{firm}} to explore Filterbaby, I completely understand — timing is everything in this business.
+
+We'll keep building. If water-as-skincare infrastructure ever becomes a thesis area for {{firm}}, I'd love to reconnect. In the meantime, you can follow our progress at filterbaby.com.
+
+Wishing you and the team all the best.
+
+Warm regards,
+{{sender_name}}
+Filterbaby`
+  }
+];
+
+function loadTemplates() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(TEMPLATES_KEY));
+    return stored && stored.length > 0 ? stored : [...DEFAULT_TEMPLATES];
+  } catch { return [...DEFAULT_TEMPLATES]; }
+}
+function saveTemplates(t) {
+  localStorage.setItem(TEMPLATES_KEY, JSON.stringify(t));
+}
+
+let emailTemplates = loadTemplates();
+let selectedTplId = null;
+let tplTargetInvestorId = null;
+
+// Inject variables into template
+function injectVars(text, inv) {
+  const contactFirst = (inv.contact || '').split(' ')[0] || 'there';
+  const senderName = settings.teamMembers.split(',')[0]?.trim() || 'Andrew';
+  // Try to extract a synergy brand from the thesis
+  const portfolioMatch = (inv.thesis || '').match(/Portfolio:\s*([^,.]+)/i);
+  const synergyBrand = portfolioMatch ? portfolioMatch[1].trim() : '[portfolio brand]';
+
+  return text
+    .replace(/\{\{contact_first\}\}/g, contactFirst)
+    .replace(/\{\{contact\}\}/g, inv.contact || '[Contact Name]')
+    .replace(/\{\{firm\}\}/g, inv.firm || '[Firm]')
+    .replace(/\{\{synergy_brand\}\}/g, synergyBrand)
+    .replace(/\{\{sender_name\}\}/g, senderName)
+    .replace(/\{\{mutual_contact\}\}/g, '[Mutual Contact]')
+    .replace(/\{\{suggested_times\}\}/g, '[Add your availability]')
+    .replace(/\{\{topic_discussed\}\}/g, '[topic from conversation]')
+    .replace(/\{\{next_steps\}\}/g, '[Outline agreed next steps]');
+}
+
+// Build Gmail compose URL
+function buildGmailComposeUrl(to, subject, body) {
+  const params = new URLSearchParams();
+  if (to) params.set('to', to);
+  if (subject) params.set('su', subject);
+  if (body) params.set('body', body);
+  return `https://mail.google.com/mail/?view=cm&fs=1&${params.toString()}`;
+}
+
+// Open templates library (standalone, no investor context)
+function openTemplatesLibrary() {
+  tplTargetInvestorId = null;
+  selectedTplId = null;
+  renderTemplatesModal('Email Templates', false);
+}
+
+// Open templates for a specific investor (from their lead panel)
+function openTemplatesForInvestor(investorId) {
+  tplTargetInvestorId = investorId;
+  selectedTplId = null;
+  const inv = investors.find(i => i.id === investorId);
+  renderTemplatesModal(`Email ${inv?.firm || ''}`, true);
+}
+
+function renderTemplatesModal(title, showCompose) {
+  const modal = document.getElementById('tplModal');
+  const body = document.getElementById('tplBody');
+  const actions = document.getElementById('tplActions');
+  document.getElementById('tplModalTitle').textContent = title;
+
+  const categories = [...new Set(emailTemplates.map(t => t.category))];
+  
+  body.innerHTML = categories.map(cat => `
+    <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;margin:${cat === categories[0] ? '0' : '16px'} 0 8px;">${cat}</div>
+    ${emailTemplates.filter(t => t.category === cat).map(t => `
+      <div class="tpl-card ${selectedTplId === t.id ? 'active' : ''}" onclick="selectTemplate('${t.id}', event)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div style="flex:1;">
+            <div class="tpl-card-name">${esc(t.name)}</div>
+            <div class="tpl-card-preview">${esc(t.subject)}</div>
+          </div>
+          ${!showCompose ? `<div style="display:flex;gap:4px;flex-shrink:0;margin-left:8px;" onclick="event.stopPropagation()">
+            <button class="btn btn-sm btn-secondary" onclick="editTemplate('${t.id}')" style="padding:4px 8px;font-size:11px;">Edit</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteTemplate('${t.id}')" style="padding:4px 8px;font-size:11px;">Del</button>
+          </div>` : ''}
+        </div>
+      </div>
+    `).join('')}
+  `).join('');
+
+  if (showCompose) {
+    actions.innerHTML = `
+      <button class="btn btn-secondary" onclick="closeTemplates()" style="flex:1;">Cancel</button>
+      <button class="btn btn-primary" id="tplComposeBtn" onclick="composeFromTemplate()" disabled style="flex:2;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg>
+        Select a template
+      </button>
+    `;
+  } else {
+    actions.innerHTML = `
+      <button class="btn btn-secondary" onclick="closeTemplates()" style="flex:1;">Close</button>
+      <button class="btn btn-primary" onclick="showTemplateEditor()" style="flex:1;">+ New Template</button>
+    `;
+  }
+
+  modal.classList.add('open');
+}
+
+function selectTemplate(tplId, evt) {
+  selectedTplId = tplId;
+  const tpl = emailTemplates.find(t => t.id === tplId);
+  if (!tpl) return;
+
+  document.querySelectorAll('.tpl-card').forEach(c => c.classList.remove('active'));
+  const card = evt.currentTarget;
+  card.classList.add('active');
+
+  const inv = tplTargetInvestorId ? investors.find(i => i.id === tplTargetInvestorId) : null;
+  const previewBody = inv ? injectVars(tpl.body, inv) : tpl.body;
+  const previewSubject = inv ? injectVars(tpl.subject, inv) : tpl.subject;
+
+  const existing = document.getElementById('tplPreviewBox');
+  if (existing) existing.remove();
+
+  const preview = document.createElement('div');
+  preview.id = 'tplPreviewBox';
+  preview.innerHTML = `
+    <div class="tpl-preview-full">
+      <div style="font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Subject: ${esc(previewSubject)}</div>
+      ${esc(previewBody)}
+    </div>
+  `;
+  card.after(preview);
+
+  const btn = document.getElementById('tplComposeBtn');
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg>
+      Open in Gmail
+    `;
+  }
+}
+
+function composeFromTemplate() {
+  if (!selectedTplId) return;
+  const tpl = emailTemplates.find(t => t.id === selectedTplId);
+  if (!tpl) return;
+
+  const inv = tplTargetInvestorId ? investors.find(i => i.id === tplTargetInvestorId) : {};
+  const subject = injectVars(tpl.subject, inv);
+  const body = injectVars(tpl.body, inv);
+  const to = inv.email || '';
+
+  const url = buildGmailComposeUrl(to, subject, body);
+  window.open(url, '_blank');
+
+  if (tplTargetInvestorId && inv.id) {
+    addTimelineEntry(inv.id, `📧 Email drafted: "${tpl.name}" template`);
+    saveData(investors);
+    renderCards();
+  }
+
+  closeTemplates();
+  toast('Opened in Gmail', 'success');
+}
+
+// ── Inline template editor (replaces prompt() dialogs) ──
+function showTemplateEditor(existingId) {
+  const tpl = existingId ? emailTemplates.find(t => t.id === existingId) : null;
+  const isEdit = !!tpl;
+  const body = document.getElementById('tplBody');
+  const actions = document.getElementById('tplActions');
+  document.getElementById('tplModalTitle').textContent = isEdit ? 'Edit Template' : 'New Template';
+
+  const varButtons = `
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+      <span style="font-size:10px;color:var(--text-secondary);width:100%;">Insert variable:</span>
+      ${['{{contact_first}}','{{firm}}','{{synergy_brand}}','{{sender_name}}','{{mutual_contact}}'].map(v =>
+        `<button type="button" class="btn btn-sm btn-secondary" style="padding:2px 8px;font-size:11px;" onclick="insertVar('tplEditBody','${v}')">${v.replace(/\{\{|\}\}/g,'')}</button>`
+      ).join('')}
+    </div>`;
+
+  body.innerHTML = `
+    <div class="form-group">
+      <label class="form-label">Template Name</label>
+      <input class="form-input" id="tplEditName" value="${esc(tpl?.name || '')}" placeholder="e.g. Cold intro — science-led">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Category</label>
+      <select class="form-select" id="tplEditCat">
+        ${['Cold Outreach','Warm Intro','Follow-up','Meeting','Due Diligence','Custom'].map(c =>
+          `<option value="${c}" ${(tpl?.category || 'Custom') === c ? 'selected' : ''}>${c}</option>`
+        ).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Subject Line</label>
+      <input class="form-input" id="tplEditSubject" value="${esc(tpl?.subject || '')}" placeholder="Filterbaby — {{firm}} intro">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email Body</label>
+      <textarea class="form-textarea" id="tplEditBody" style="min-height:200px;font-size:13px;line-height:1.6;" placeholder="Hi {{contact_first}},&#10;&#10;Write your email template here...">${esc(tpl?.body || '')}</textarea>
+      ${varButtons}
+    </div>
+  `;
+
+  actions.innerHTML = `
+    <button class="btn btn-secondary" onclick="${isEdit ? "openTemplatesLibrary()" : "openTemplatesLibrary()"}" style="flex:1;">Cancel</button>
+    <button class="btn btn-primary" onclick="saveTemplateFromEditor('${existingId || ''}')" style="flex:2;">${isEdit ? 'Save Changes' : 'Create Template'}</button>
+  `;
+}
+
+function insertVar(textareaId, varText) {
+  const ta = document.getElementById(textareaId);
+  if (!ta) return;
+  const start = ta.selectionStart;
+  const end = ta.selectionEnd;
+  ta.value = ta.value.substring(0, start) + varText + ta.value.substring(end);
+  ta.selectionStart = ta.selectionEnd = start + varText.length;
+  ta.focus();
+}
+
+function saveTemplateFromEditor(existingId) {
+  const name = document.getElementById('tplEditName').value.trim();
+  const category = document.getElementById('tplEditCat').value;
+  const subject = document.getElementById('tplEditSubject').value.trim();
+  const body = document.getElementById('tplEditBody').value.trim();
+
+  if (!name) { toast('Template needs a name', 'error'); return; }
+  if (!subject && !body) { toast('Template needs at least a subject or body', 'error'); return; }
+
+  if (existingId) {
+    const idx = emailTemplates.findIndex(t => t.id === existingId);
+    if (idx > -1) {
+      emailTemplates[idx] = { ...emailTemplates[idx], name, category, subject, body };
+    }
+    toast('Template updated', 'success');
+  } else {
+    emailTemplates.push({ id: 'custom_' + Date.now(), name, category, subject, body });
+    toast('Template created', 'success');
+  }
+
+  saveTemplates(emailTemplates);
+  openTemplatesLibrary();
+}
+
+function editTemplate(tplId) {
+  showTemplateEditor(tplId);
+}
+
+function deleteTemplate(tplId) {
+  const tpl = emailTemplates.find(t => t.id === tplId);
+  if (!tpl) return;
+  if (!confirm(`Delete "${tpl.name}"?`)) return;
+  emailTemplates = emailTemplates.filter(t => t.id !== tplId);
+  saveTemplates(emailTemplates);
+  openTemplatesLibrary();
+  toast('Template deleted');
+}
+
+function closeTemplates() {
+  document.getElementById('tplModal').classList.remove('open');
+  selectedTplId = null;
+}
+
+// Quick compose — opens Gmail with just the contact email pre-filled
+function composeQuickEmail(investorId) {
+  const inv = investors.find(i => i.id === investorId);
+  if (!inv) return;
+  if (!inv.email) {
+    toast('No email address — add one first or use a template', 'error');
+    return;
+  }
+  const url = buildGmailComposeUrl(inv.email, '', '');
+  window.open(url, '_blank');
+  addTimelineEntry(inv.id, `📧 Quick email opened for ${inv.email}`);
+  saveData(investors);
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════════
+(async function init() {
+  // Check auth first
+  const authed = await checkAuth();
+  
+  // Always fetch server status and render
+  await fetchServerStatus();
+  updateSetupBanner();
+  renderCards();
+
+  // If authenticated, auto-set owner for new leads
+  if (currentUser) {
+    const firstName = currentUser.name?.split(' ')[0] || currentUser.email?.split('@')[0];
+    // Ensure current user is in team members list
+    const members = settings.teamMembers.split(',').map(m => m.trim());
+    if (firstName && !members.includes(firstName)) {
+      settings.teamMembers = [...members, firstName].filter(Boolean).join(', ');
+      saveSettingsData(settings);
+    }
+  }
+})();
+
+// Close modals on escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closePanel();
+    closeSettings();
+    closeTemplates();
+  }
+});
+
+// Close settings on overlay click
+document.getElementById('settingsModal').addEventListener('click', closeSettings);
+</script>
+
+</body>
+</html>

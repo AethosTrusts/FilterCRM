@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head><title>Filterbaby CRM — Diagnostics</title>
+<style>body{font-family:monospace;max-width:600px;margin:40px auto;padding:20px;background:#1a1a17;color:#f5f2ec}h1{font-size:18px}
+.test{margin:12px 0;padding:12px;border:1px solid #333;border-radius:6px}
+.pass{border-color:#4a7c59;background:#1a2e1f}.fail{border-color:#9c4040;background:#2e1a1a}
+.wait{border-color:#666;opacity:0.6}a{color:#c8b89a}
+button{background:#c8b89a;color:#1a1a17;border:none;padding:10px 20px;border-radius:6px;font-size:14px;cursor:pointer;margin-top:20px}
+</style>
+</head>
+<body>
+<h1>Filterbaby CRM — Function Diagnostics</h1>
+<p>Testing each endpoint. If everything shows PASS, your functions are deployed correctly.</p>
+
+<div class="test wait" id="t1">1. Direct function path: /.netlify/functions/status — waiting...</div>
+<div class="test wait" id="t2">2. Redirect path: /api/status — waiting...</div>
+<div class="test wait" id="t3">3. Auth login redirect: /api/auth/login — waiting...</div>
+<div class="test wait" id="t4">4. Auth me: /api/auth/me — waiting...</div>
+
+<button onclick="runTests()">Run Tests</button>
+
+<script>
+async function testEndpoint(id, url, expectJson) {
+  var el = document.getElementById(id);
+  try {
+    var resp = await fetch(url, { redirect: 'manual' });
+    if (resp.type === 'opaqueredirect' || resp.status === 302 || resp.status === 301) {
+      el.textContent = el.textContent.split('—')[0] + '— PASS (redirect ' + resp.status + ')';
+      el.className = 'test pass';
+      return;
+    }
+    if (resp.ok && expectJson) {
+      var data = await resp.json();
+      el.textContent = el.textContent.split('—')[0] + '— PASS: ' + JSON.stringify(data);
+      el.className = 'test pass';
+    } else if (resp.ok) {
+      el.textContent = el.textContent.split('—')[0] + '— PASS (status ' + resp.status + ')';
+      el.className = 'test pass';
+    } else {
+      var body = await resp.text();
+      el.textContent = el.textContent.split('—')[0] + '— FAIL (status ' + resp.status + '): ' + body.substring(0, 200);
+      el.className = 'test fail';
+    }
+  } catch (e) {
+    el.textContent = el.textContent.split('—')[0] + '— FAIL: ' + e.message;
+    el.className = 'test fail';
+  }
+}
+
+async function runTests() {
+  await testEndpoint('t1', '/.netlify/functions/status', true);
+  await testEndpoint('t2', '/api/status', true);
+  await testEndpoint('t3', '/api/auth/login', false);
+  await testEndpoint('t4', '/api/auth/me', true);
+}
+
+runTests();
+</script>
+</body>
+</html>
