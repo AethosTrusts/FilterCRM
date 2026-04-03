@@ -199,12 +199,11 @@ body {
   align-items: center;
   background: var(--card-bg);
   border-bottom: 1px solid var(--border);
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  flex-wrap: wrap;
 }
-.filter-bar::-webkit-scrollbar { display: none; }
 .search-input {
   flex: 1;
+  min-width: 180px;
   padding: 10px 12px 10px 36px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -226,7 +225,7 @@ body {
   padding: 8px 14px;
   border: 1px solid var(--border);
   border-radius: 20px;
-  font-size: 12px;
+  font-size: 13px;
   font-family: inherit;
   font-weight: 500;
   color: var(--text-secondary);
@@ -241,7 +240,7 @@ body {
   background: var(--gold-light);
 }
 
-/* ─── CHECK SIZE FILTER DROPDOWN ─── */
+/* ─── FILTER DROPDOWNS ─── */
 .filter-dropdown-wrap {
   position: relative;
 }
@@ -254,7 +253,7 @@ body {
   border-radius: var(--radius);
   box-shadow: var(--shadow-lg);
   z-index: 90;
-  min-width: 180px;
+  min-width: 220px;
   padding: 6px 0;
   display: none;
 }
@@ -262,8 +261,8 @@ body {
 .filter-dropdown-item {
   display: block;
   width: 100%;
-  padding: 9px 16px;
-  font-size: 13px;
+  padding: 10px 18px;
+  font-size: 14px;
   font-family: inherit;
   color: var(--text);
   background: none;
