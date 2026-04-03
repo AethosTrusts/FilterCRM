@@ -48,6 +48,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/contact-enrich"
+  to = "/.netlify/functions/contact-enrich"
+  status = 200
+
+[[redirects]]
   from = "/api/status"
   to = "/.netlify/functions/status"
   status = 200

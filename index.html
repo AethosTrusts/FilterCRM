@@ -199,7 +199,10 @@ body {
   align-items: center;
   background: var(--card-bg);
   border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
+.filter-bar::-webkit-scrollbar { display: none; }
 .search-input {
   flex: 1;
   padding: 10px 12px 10px 36px;
@@ -237,6 +240,85 @@ body {
   color: var(--dark);
   background: var(--gold-light);
 }
+
+/* ─── CHECK SIZE FILTER DROPDOWN ─── */
+.filter-dropdown-wrap {
+  position: relative;
+}
+.filter-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  z-index: 90;
+  min-width: 180px;
+  padding: 6px 0;
+  display: none;
+}
+.filter-dropdown.open { display: block; }
+.filter-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.filter-dropdown-item:hover { background: var(--cream); }
+.filter-dropdown-item.active {
+  color: var(--gold-dark);
+  font-weight: 600;
+  background: var(--gold-light);
+}
+
+/* ─── ENRICH CONTACTS ─── */
+.enrich-bar {
+  display: none;
+  background: var(--blue-light);
+  border-bottom: 1px solid #C8D8E8;
+  padding: 10px 20px;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--blue);
+}
+.enrich-bar.visible { display: flex; }
+.enrich-progress {
+  flex: 1;
+  height: 6px;
+  background: rgba(74,106,140,0.15);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.enrich-progress-fill {
+  height: 100%;
+  background: var(--blue);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+  width: 0%;
+}
+.enrich-status { font-weight: 500; white-space: nowrap; }
+.enrich-count { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+.enrich-cancel {
+  background: none;
+  border: 1px solid rgba(74,106,140,0.3);
+  color: var(--blue);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.enrich-cancel:hover { background: rgba(74,106,140,0.1); }
 
 /* ─── INVESTOR CARDS ─── */
 .cards-container {
@@ -631,41 +713,6 @@ body {
 }
 
 /* ─── QUICK UPDATE BAR (for fast mobile notes) ─── */
-.quick-update {
-  display: none;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: var(--card-bg);
-  border-top: 1px solid var(--border);
-  padding: 12px 16px;
-  z-index: 202;
-  gap: 8px;
-}
-.quick-update.visible { display: flex; }
-.quick-update input {
-  flex: 1;
-  padding: 10px 14px;
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  font-size: 14px;
-  font-family: inherit;
-  outline: none;
-}
-.quick-update input:focus { border-color: var(--gold); }
-.quick-update button {
-  padding: 10px 16px;
-  background: var(--dark);
-  color: var(--cream);
-  border: none;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-}
-
 /* ─── BUTTONS ─── */
 .btn {
   padding: 10px 20px;
@@ -1114,6 +1161,14 @@ body {
     <div class="header-badge">Pipeline</div>
   </div>
   <div class="header-actions">
+    <button class="header-btn" onclick="startResearchAll()" id="researchAllBtn" title="AI-research all un-profiled investors">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      Research
+    </button>
+    <button class="header-btn" onclick="startEnrichAll()" id="enrichBtn" title="Find missing emails via AI">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M16 3.13a4 4 0 010 7.75M21 21v-2a4 4 0 00-3-3.87"/></svg>
+      Enrich
+    </button>
     <button class="header-btn" onclick="openTemplatesLibrary()" title="Email Templates">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg>
       <span>Templates</span>
@@ -1137,6 +1192,14 @@ body {
 <div class="setup-banner" id="setupBanner" onclick="openSettings()">
   <div class="setup-dot"></div>
   <span>Connect your integrations — tap to set up Google Sheets, Slack, & PandaDoc</span>
+</div>
+
+<!-- ENRICH PROGRESS -->
+<div class="enrich-bar" id="enrichBar">
+  <span class="enrich-status" id="enrichStatus">Finding emails...</span>
+  <div class="enrich-progress"><div class="enrich-progress-fill" id="enrichFill"></div></div>
+  <span class="enrich-count" id="enrichCount">0 / 0</span>
+  <button class="enrich-cancel" onclick="cancelBatchOp()">Cancel</button>
 </div>
 
 <!-- STATS BAR -->
@@ -1174,7 +1237,44 @@ body {
 <!-- SEARCH / FILTER -->
 <div class="filter-bar">
   <input type="search" class="search-input" id="searchInput" placeholder="Search firms, contacts, notes..." oninput="renderCards()">
-  <button class="filter-pill" onclick="toggleSort(this)">A–Z</button>
+  <div class="filter-dropdown-wrap">
+    <button class="filter-pill" id="sortByBtn" onclick="toggleDropdown('sortByDropdown')">A–Z</button>
+    <div class="filter-dropdown" id="sortByDropdown">
+      <button class="filter-dropdown-item active" onclick="setSortBy('alpha-asc', this)">A – Z</button>
+      <button class="filter-dropdown-item" onclick="setSortBy('alpha-desc', this)">Z – A</button>
+      <button class="filter-dropdown-item" onclick="setSortBy('status', this)">By Status</button>
+      <button class="filter-dropdown-item" onclick="setSortBy('date-new', this)">Newest First</button>
+      <button class="filter-dropdown-item" onclick="setSortBy('date-old', this)">Oldest First</button>
+      <button class="filter-dropdown-item" onclick="setSortBy('activity', this)">Last Activity</button>
+      <button class="filter-dropdown-item" onclick="setSortBy('check-asc', this)">↑ Check Size: Low</button>
+      <button class="filter-dropdown-item" onclick="setSortBy('check-desc', this)">↓ Check Size: High</button>
+    </div>
+  </div>
+  <div class="filter-dropdown-wrap">
+    <button class="filter-pill" id="checkSizeBtn" onclick="toggleDropdown('checkSizeDropdown')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:-2px;margin-right:3px;"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Check Size
+    </button>
+    <div class="filter-dropdown" id="checkSizeDropdown">
+      <button class="filter-dropdown-item active" onclick="setCheckSizeFilter('all', this)">All sizes</button>
+      <button class="filter-dropdown-item" onclick="setCheckSizeFilter('under500k', this)">Under $500K</button>
+      <button class="filter-dropdown-item" onclick="setCheckSizeFilter('500k-2m', this)">$500K – $2M</button>
+      <button class="filter-dropdown-item" onclick="setCheckSizeFilter('2m-5m', this)">$2M – $5M</button>
+      <button class="filter-dropdown-item" onclick="setCheckSizeFilter('5m-10m', this)">$5M – $10M</button>
+      <button class="filter-dropdown-item" onclick="setCheckSizeFilter('10m-plus', this)">$10M+</button>
+    </div>
+  </div>
+  <div class="filter-dropdown-wrap">
+    <button class="filter-pill" id="ownerBtn" onclick="toggleDropdown('ownerDropdown')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:-2px;margin-right:3px;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Owner
+    </button>
+    <div class="filter-dropdown" id="ownerDropdown">
+      <button class="filter-dropdown-item active" onclick="setOwnerFilter('all', this)">Everyone</button>
+      <button class="filter-dropdown-item" onclick="setOwnerFilter('Andrew', this)">Andrew</button>
+      <button class="filter-dropdown-item" onclick="setOwnerFilter('Lynn', this)">Lynn</button>
+      <button class="filter-dropdown-item" onclick="setOwnerFilter('Xin', this)">Xin</button>
+      <button class="filter-dropdown-item" onclick="setOwnerFilter('unassigned', this)">Unassigned</button>
+    </div>
+  </div>
 </div>
 
 <!-- INVESTOR CARDS -->
@@ -1196,12 +1296,6 @@ body {
   </div>
   <div class="panel-body" id="panelBody"></div>
   <div class="panel-footer" id="panelFooter"></div>
-</div>
-
-<!-- QUICK UPDATE BAR (shows when viewing a lead) -->
-<div class="quick-update" id="quickUpdate">
-  <input type="text" id="quickInput" placeholder="Quick note..." onkeydown="if(event.key==='Enter')addQuickNote()">
-  <button onclick="addQuickNote()">Send</button>
 </div>
 
 <!-- SETTINGS MODAL -->
@@ -1269,7 +1363,6 @@ function saveSettingsData(s) {
 let investors = loadData();
 let settings = loadSettings();
 let currentTab = 'all';
-let sortAsc = true;
 let editingId = null;
 
 // Seed data if empty
@@ -1310,6 +1403,107 @@ if (investors.length === 0) {
     { firm: 'MarcyPen Capital Partners', contact: 'Larry Marcus', email: '', stage: 'Seed–Growth', checkSize: '$1M–$10M', status: 'new', nda: 'none', owner: '', website: 'https://pendulumholdings.com', linkedin: '', thesis: 'Marcy Venture Partners (JAY-Z) + Pendulum merged Sept 2024. ~$900M combined AUM. 5 unicorns. Portfolio: Adwoa Beauty (textured haircare, Sephora-exclusive), Therabody (wellness devices), Madison Reed (hair color), Savage X Fenty. Adwoa haircare + Therabody wellness hardware = natural conversation points. Significant cultural cachet and media amplification potential.', notes: 'TIER 2. JAY-Z backed. Therabody = wellness hardware. Adwoa = haircare. $900M AUM. Major cultural amplification.', timeline: [], created: new Date().toISOString() },
     { firm: 'Springdale Ventures', contact: 'Genevieve Gilbreath', email: '', stage: 'Seed–Series A', checkSize: '$250K–$2M', status: 'new', nda: 'none', owner: '', website: 'https://springdaleventures.com', linkedin: '', thesis: 'Austin-based. Fund II = $40M. 49 investments. Both co-founders are former consumer brand operators. Portfolio: Jupiter (scalp/hair care, 1,100+ Target stores), TBD Health, Feastables, GOODLES. Jupiter Target distribution directly parallels FB Target strategy — Springdale understands what it takes to scale a wellness brand in mass retail.', notes: 'TIER 2. Jupiter at 1,100+ Target stores = direct distribution parallel. Operator-founders. $40M Fund II.', timeline: [], created: new Date().toISOString() },
     { firm: 'Joyance Partners', contact: 'Michael Edelhart', email: '', stage: 'Pre-seed–Series A', checkSize: 'Pre-seed–Series A range', status: 'new', nda: 'none', owner: '', website: 'https://joyancepartners.com', linkedin: '', thesis: '~$1B AUM. 188+ companies invested. Thesis: science of happiness applied to consumer products. Portfolio: JOYA (employer-benefit skin health platform), Conserving Beauty (solutions-based skincare), DermBiont (skin disease therapeutics), Phyla (probiotic skincare), 10Beauty (robotic manicure). JOYA skin health focus + DermBiont dermatological science directly intersect with FB clinical skin data. Phyla microbiome = skin-barrier conversation where water quality matters.', notes: 'TIER 2. JOYA/DermBiont/Phyla = skin science portfolio. 188+ investments. $1B AUM. Science-of-happiness thesis.', timeline: [], created: new Date().toISOString() },
+    // ── Excel import: Filterbaby_Investors.xlsx ──
+    { firm: 'Adapt Ventures', contact: 'Mayssa Behave', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '', timeline: [], created: new Date().toISOString() },
+    { firm: 'Alliance Consumer Growth', contact: '', email: '', stage: '', checkSize: '', status: 'meeting', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '[Lynn] Had call', timeline: [], created: new Date().toISOString() },
+    { firm: 'Bansk Group', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Lynn', website: '', linkedin: 'https://www.linkedin.com/in/amanda-wallbrink-64a867a3/', thesis: '', notes: '', timeline: [], created: new Date().toISOString() },
+    { firm: 'Beechwood', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '', timeline: [], created: new Date().toISOString() },
+    { firm: 'Belilade Ventures', contact: 'Bill Schultz', email: '', stage: '', checkSize: '', status: 'declined', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '[Lynn] Passed | Said not interested in the household space', timeline: [], created: new Date().toISOString() },
+    { firm: 'Bullish', contact: 'Amanda Zhao', email: '', stage: '', checkSize: '', status: 'meeting', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '[Lynn] Had call | Xin never responded', timeline: [], created: new Date().toISOString() },
+    { firm: 'Cavu', contact: '', email: '', stage: '', checkSize: '', status: 'declined', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '[Lynn] Passed', timeline: [], created: new Date().toISOString() },
+    { firm: 'Celia Bosch Torres', contact: 'Iris', email: '', stage: '', checkSize: '', status: 'contacted', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '[Lynn] Re-emailed 11/20', timeline: [], created: new Date().toISOString() },
+    { firm: 'Coefficient', contact: 'Anna Whiteman', email: '', stage: '', checkSize: '', status: 'contacted', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '[Lynn] Sent Outreach | Ben Sharf introed. Xin sent follow up email.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Cowboy Ventures', contact: 'Aileen Lee', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Lynn', website: 'https://www.cowboy.vc/portfolio', linkedin: '', thesis: '', notes: '', timeline: [], created: new Date().toISOString() },
+    { firm: 'Cutting Horse', contact: '', email: 'jimmy@cuttinghorse.com', stage: '', checkSize: '', status: 'due-diligence', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '[Lynn] Due Diligence | Xin to send NDA', timeline: [], created: new Date().toISOString() },
+    { firm: 'DBG Health', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Lynn', website: 'https://dbghealth.com.au/our-products/', linkedin: '', thesis: '', notes: '', timeline: [], created: new Date().toISOString() },
+    { firm: 'Electric Feel Venture', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '', timeline: [], created: new Date().toISOString() },
+    { firm: 'Elephant', contact: 'Chialin Yu', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '', timeline: [], created: new Date().toISOString() },
+    { firm: 'Encore', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '', timeline: [], created: new Date().toISOString() },
+    { firm: 'Everywhere Ventures', contact: 'Mayssa Behave', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '', timeline: [], created: new Date().toISOString() },
+    { firm: 'Forerunner', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '', timeline: [], created: new Date().toISOString() },
+    { firm: 'Founder Collective', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '', timeline: [], created: new Date().toISOString() },
+    { firm: 'H Venture Partners', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Lynn', website: '', linkedin: 'https://www.linkedin.com/in/betsy-elizabeth-bluestone-859070b8/', thesis: '', notes: 'Mutual intro: Andrea Popova', timeline: [], created: new Date().toISOString() },
+    { firm: 'Ignite XL', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '', timeline: [], created: new Date().toISOString() },
+    { firm: 'Imarginary VC / Growth', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '', timeline: [], created: new Date().toISOString() },
+    { firm: 'InviNext', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '', timeline: [], created: new Date().toISOString() },
+    { firm: 'Karp Reiley', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '', timeline: [], created: new Date().toISOString() },
+    { firm: 'Left Lane Capital', contact: 'Alexa Tsay', email: '', stage: '', checkSize: '', status: 'contacted', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '[Lynn] Sent Outreach', timeline: [], created: new Date().toISOString() },
+    { firm: 'Listen Co', contact: 'Ellen Wilcox', email: '', stage: '', checkSize: '', status: 'declined', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '[Lynn] Passed | Hasti introed. They invested in Jolie.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Maveron VC', contact: '', email: '', stage: '', checkSize: '', status: 'meeting', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '[Lynn] Scheduling Call', timeline: [], created: new Date().toISOString() },
+    { firm: 'Newbound Capital', contact: '', email: '', stage: '', checkSize: '', status: 'contacted', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '[Lynn] Sent Outreach | Asked Charlotte Cruze to intro', timeline: [], created: new Date().toISOString() },
+    { firm: 'Norwest', contact: 'Gabrielle Rush', email: '', stage: '', checkSize: '', status: 'due-diligence', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '[Lynn] Due Diligence | Waiting them to sign NDA', timeline: [], created: new Date().toISOString() },
+    { firm: 'Pareto Holdings', contact: 'Mayssa Behave', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '', timeline: [], created: new Date().toISOString() },
+    { firm: 'Prelude Growth Partners', contact: '', email: '', stage: '', checkSize: '', status: 'declined', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '[Lynn] Passed | Said not interested in the spce', timeline: [], created: new Date().toISOString() },
+    { firm: 'Point King Capital', contact: 'Lauren Rinkey', email: '', stage: '', checkSize: '', status: 'meeting', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '[Lynn] Had call', timeline: [], created: new Date().toISOString() },
+    { firm: 'Ridgeline Venture', contact: 'Ally Disterhoft', email: '', stage: '', checkSize: '', status: 'meeting', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '[Lynn] Had call | Doesn\'t lead. Only writes follow on.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Sonoma Brands', contact: '', email: '', stage: '', checkSize: '', status: 'meeting', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '[Lynn] Scheduling Call | Asked Charlotte Cruze to intro', timeline: [], created: new Date().toISOString() },
+    { firm: 'Summit Partners', contact: 'Greta', email: '', stage: '', checkSize: '', status: 'declined', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '[Lynn] Not a fit', timeline: [], created: new Date().toISOString() },
+    { firm: 'Touch Capital**', contact: 'Grace Gould', email: '', stage: '', checkSize: '', status: 'declined', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '[Lynn] Not a fit | Said they\'re not investing in the space.', timeline: [], created: new Date().toISOString() },
+    { firm: 'TZP GROUP', contact: 'Cameron Lemberg', email: '', stage: '', checkSize: '', status: 'meeting', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '[Lynn] Had call | Investor followed up on 4/1 asking to catch up', timeline: [], created: new Date().toISOString() },
+    { firm: 'Unilever Ventures', contact: 'Kendall Reinhart', email: '', stage: '', checkSize: '', status: 'declined', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '[Lynn] Passed | Said subscription was too low, and retail launch was too early.', timeline: [], created: new Date().toISOString() },
+    { firm: 'Vanterra', contact: 'Elizabeth Brown', email: '', stage: '', checkSize: '', status: 'declined', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '[Lynn] Passed', timeline: [], created: new Date().toISOString() },
+    { firm: 'Willow Growth', contact: '', email: '', stage: '', checkSize: '', status: 'meeting', nda: 'none', owner: 'Lynn', website: '', linkedin: '', thesis: '', notes: '[Lynn] Scheduling Call | Asked Charlotte Cruze to intro', timeline: [], created: new Date().toISOString() },
+    { firm: 'Craft Ventures', contact: 'Michael Robinson', email: 'mrobinson@craftventures.com', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] Potential', timeline: [], created: new Date().toISOString() },
+    { firm: 'Google Ventures', contact: 'Crystal Huang', email: 'crystal@gv.com', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] Potential', timeline: [], created: new Date().toISOString() },
+    { firm: 'Lightspeed Venture Partners', contact: 'Sam Eisler', email: 'seisler@lsvp.com', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] Potential', timeline: [], created: new Date().toISOString() },
+    { firm: 'Sequoia Capital', contact: 'Isaiah Boone', email: 'iboone@sequoiacap.com', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: 'Portfolio: Isaiah Boone , Michelle Bailhe , Josephine Chen , Veronica Boubnova , Charlie Curnin', notes: '[Xin] Potential', timeline: [], created: new Date().toISOString() },
+    { firm: 'Accel Partners', contact: 'Christine Esserman', email: 'cesserman@accel.com', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: 'Portfolio: Christine Esserman , Humza Tariq , George Pike', notes: '[Xin] Potential', timeline: [], created: new Date().toISOString() },
+    { firm: 'Index Venture Partners', contact: 'Emil Schaefer', email: 'emil.schaefer@indexventures.com', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] Potential', timeline: [], created: new Date().toISOString() },
+    { firm: 'FirstMark Ventures', contact: 'Desmond Fleming', email: 'dez@firstmark.com', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] Potential', timeline: [], created: new Date().toISOString() },
+    { firm: 'Upfront Ventures', contact: 'Kevin Zhang', email: 'kevin@upfront.com', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: 'Portfolio: Kevin Zhang , Aditi Maliwal', notes: '[Xin] Potential', timeline: [], created: new Date().toISOString() },
+    { firm: 'General Catalyst', contact: '', email: 'tolkowski@generalcatalyst.com', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] Potential', timeline: [], created: new Date().toISOString() },
+    { firm: '8VC', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] Potential', timeline: [], created: new Date().toISOString() },
+    { firm: 'Thive', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] Potential', timeline: [], created: new Date().toISOString() },
+    { firm: 'Greycroft', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] Potential', timeline: [], created: new Date().toISOString() },
+    { firm: 'Northzone', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] Potential', timeline: [], created: new Date().toISOString() },
+    { firm: 'Highland Capital Partners', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] Potential', timeline: [], created: new Date().toISOString() },
+    { firm: 'Bain', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] Potential', timeline: [], created: new Date().toISOString() },
+    { firm: 'General Atlantic', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] Potential', timeline: [], created: new Date().toISOString() },
+    { firm: 'Draper', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] Potential', timeline: [], created: new Date().toISOString() },
+    { firm: 'RRE Ventures', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] Potential', timeline: [], created: new Date().toISOString() },
+    { firm: 'Slope', contact: 'Karine Hsu', email: 'karine@slope.agency', stage: '', checkSize: '', status: 'contacted', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] Reached Out | Sent Blurb', timeline: [], created: new Date().toISOString() },
+    { firm: 'Root & Shoot Ventures (RS Ventures)', contact: 'Gordon Tsui', email: 'gordon@rs.ventures', stage: '', checkSize: '', status: 'contacted', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] Reached Out | Sent Blurb', timeline: [], created: new Date().toISOString() },
+    { firm: 'Soma Capital', contact: 'Aneel Ranadive', email: 'aneel@somacap.com', stage: '', checkSize: '', status: 'contacted', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: 'Portfolio: Aneel Ranadive , Nikhita Jaaswal', notes: '[Xin] Reached Out | Sent Blurb', timeline: [], created: new Date().toISOString() },
+    { firm: 'AME Cloud Ventures', contact: 'Jeff Chung', email: 'jeff@amecloudventures.com', stage: '', checkSize: '', status: 'contacted', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] Reached Out | Sent Blurb', timeline: [], created: new Date().toISOString() },
+    { firm: 'Distique Capital', contact: 'Nate Daniels', email: 'nate@distiquecapital.com', stage: '', checkSize: '', status: 'contacted', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] Reached Out | Sent Blurb', timeline: [], created: new Date().toISOString() },
+    { firm: 'Hyphen Capital', contact: 'Dave Lu', email: 'dave@hyphencap.com', stage: '', checkSize: '', status: 'contacted', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] Reached Out | Sent Blurb', timeline: [], created: new Date().toISOString() },
+    { firm: 'Andre Koo K8', contact: 'Chris Frissora', email: 'chris@k8cap.com', stage: '', checkSize: '', status: 'due-diligence', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] 2nd dd | DD- 10/24/2025 sent, final phase dd 12/7/2025', timeline: [], created: new Date().toISOString() },
+    { firm: 'Gold house', contact: '', email: '', stage: '', checkSize: '', status: 'archived', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] no consumer | emailed megan 11/20 ask for intro, they don\'t do consumer', timeline: [], created: new Date().toISOString() },
+    { firm: 'Adarsh', contact: '', email: 'Adarsh@comma.vc', stage: '', checkSize: '', status: 'archived', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] sheep | 1 pager / product deck sent 10/27, emailed for meeting', timeline: [], created: new Date().toISOString() },
+    { firm: 'Jasper Lau / 8090', contact: '', email: '', stage: '', checkSize: '', status: 'archived', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] only a.i | reached back out text 11/20', timeline: [], created: new Date().toISOString() },
+    { firm: 'Yeti', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] Potential | followed up 11/20 with numbers', timeline: [], created: new Date().toISOString() },
+    { firm: 'UMD', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] potential | pledged $250k', timeline: [], created: new Date().toISOString() },
+    { firm: 'Alex Yeh family fund', contact: '', email: 'joe@globaltec.com.tw', stage: '', checkSize: '', status: 'archived', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] sheep | DD- 10/23/2025 sent, followed up 10/26, meeting 11/15/2025, only follow leads', timeline: [], created: new Date().toISOString() },
+    { firm: 'Patrick Finnegan', contact: '', email: 'patrick@secondsightventures.com', stage: '', checkSize: '', status: 'archived', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] sheep | 1 pager / product deck sent, followed up 10/27, texted 11/10/2025- hailey bieber', timeline: [], created: new Date().toISOString() },
+    { firm: 'Edgar Sparks Lab', contact: '', email: '', stage: '', checkSize: '', status: 'archived', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] sheep | reached out 10/27, followed up 11/5/2025', timeline: [], created: new Date().toISOString() },
+    { firm: 'Dave Grutman', contact: '', email: '', stage: '', checkSize: '', status: 'archived', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] sheep | celebrity investor', timeline: [], created: new Date().toISOString() },
+    { firm: 'TZP / Cameron', contact: '', email: 'clemberg@tzpgroup.com', stage: '', checkSize: '', status: 'archived', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] Too big | 1st meeting: 11/20, sent deck 1 pager, $10M min PE firm, she received and loves product', timeline: [], created: new Date().toISOString() },
+    { firm: 'Provenance', contact: 'makeup by mario', email: '', stage: '', checkSize: '', status: 'archived', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: 'Portfolio: makeup by mario, Everyday dose', notes: '[Xin] Too big | talked to 11/21, only do 10M invest, 30M revenue, will intro others', timeline: [], created: new Date().toISOString() },
+    { firm: 'Justin Wong  ACG', contact: 'Skims', email: '', stage: '', checkSize: '', status: 'archived', nda: 'none', owner: 'Xin', website: 'https://www.acgpartners.com', linkedin: '', thesis: 'Portfolio: Skims, Harrys, Athletic Brewing Co', notes: '[Xin] Too big | Introed by Jason via email, didn\'t respond, remailed 11/20, too big for us', timeline: [], created: new Date().toISOString() },
+    { firm: 'Alex owen, HIgh post', contact: 'Magic Spoon', email: '', stage: '', checkSize: '', status: 'due-diligence', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] 2nd dd | Intro from friend, reemailed 11/20, spoke with 12/4, second dd 12/15, 6M min check', timeline: [], created: new Date().toISOString() },
+    { firm: 'RoseStreet Capital', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] potential | spoke with him on call aleady.', timeline: [], created: new Date().toISOString() },
+    { firm: 'DMG', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: 'Taos Edmondson, passed, spoke with him 2/17/2026', timeline: [], created: new Date().toISOString() },
+    { firm: 'Unilever', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] potential | 2-5M, need to send deck, sent product 3/13/2026, followed up 3/23/', timeline: [], created: new Date().toISOString() },
+    { firm: 'Cerity Partners', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] Potential | Masco White label- will follow up once pitch to walmart, followd up 12/5', timeline: [], created: new Date().toISOString() },
+    { firm: 'Hingham Capital', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: 'Spoke to Julianne Hummelberg 3/12/206, SPV + fund 5M', timeline: [], created: new Date().toISOString() },
+    { firm: 'Yetti Founders', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: 'nori\'s contact', timeline: [], created: new Date().toISOString() },
+    { firm: 'NorthWest Capital', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: 'spoke to Gabrielle, very intersetd, need NDA, and then send deck', timeline: [], created: new Date().toISOString() },
+    { firm: 'Volition', contact: 'Grove', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: 'Portfolio: Grove, Chewy, Petsmart, Chamberlain Coffee', notes: 'Linkedin connect with a few investors', timeline: [], created: new Date().toISOString() },
+    { firm: 'VMG', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: 'charlotte- follow up', timeline: [], created: new Date().toISOString() },
+    { firm: 'Stripes Growth', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: 'Lynn reached out', timeline: [], created: new Date().toISOString() },
+    { firm: 'True Beauty', contact: '', email: '', stage: '', checkSize: '', status: 'contacted', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '[Xin] No reply | Xin sent web inquiry- no response 11/13/25', timeline: [], created: new Date().toISOString() },
+    { firm: 'Prelude Growth', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: 'Reached out to Lauren https://www.linkedin.com/in/laurenfrassetto/ 3/22', timeline: [], created: new Date().toISOString() },
+    { firm: 'Elephant / Chialin Yu', contact: 'Allbirds', email: '', stage: '', checkSize: '', status: 'contacted', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: 'Portfolio: Allbirds, Tecovas', notes: '[Xin] No reply | re-emailed 11/20', timeline: [], created: new Date().toISOString() },
+    { firm: 'Aria growth', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '', timeline: [], created: new Date().toISOString() },
+    { firm: 'Rosecliff', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: 'https://www.linkedin.com/in/hannah-sofield/, asked alex chung to intro', timeline: [], created: new Date().toISOString() },
+    { firm: 'Riverpark ventures', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '', timeline: [], created: new Date().toISOString() },
+    { firm: 'Imarginary VC/ growth', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: '', timeline: [], created: new Date().toISOString() },
+    { firm: 'Sonoma Capital', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: 'reached out by Lynn 1/1', timeline: [], created: new Date().toISOString() },
+    { firm: 'Ridgeline', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: 'wants lower valuation, follow on. talked on 1/2', timeline: [], created: new Date().toISOString() },
+    { firm: 'Wellness Growth Ventures', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: 'Portfolio: https://www.linkedin.com/in/rachel-hirsch-43b31265/', notes: 'Sam Coxe Flaus', timeline: [], created: new Date().toISOString() },
+    { firm: 'Silas Capial', contact: '', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: '', notes: 'Sophie Tiny Organics', timeline: [], created: new Date().toISOString() },
+    { firm: 'TSG', contact: 'comet cofee', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: 'Portfolio: comet cofee, elf, it cosmetics, phlur', notes: '50M+', timeline: [], created: new Date().toISOString() },
+
   ];
   seed.forEach((s, i) => { s.id = 'inv_' + Date.now() + '_' + i; });
   investors = seed;
@@ -1340,8 +1534,41 @@ function renderCards() {
     );
   }
 
-  if (sortAsc) filtered.sort((a, b) => a.firm.localeCompare(b.firm));
-  else filtered.sort((a, b) => b.firm.localeCompare(a.firm));
+  // Check-size filtering
+  if (checkSizeFilter !== 'all') {
+    filtered = filtered.filter(inv => {
+      const min = parseMinCheckSize(inv.checkSize);
+      switch (checkSizeFilter) {
+        case 'under500k': return min > 0 && min < 500000;
+        case '500k-2m': return min >= 500000 && min <= 2000000;
+        case '2m-5m': return min >= 2000000 && min <= 5000000;
+        case '5m-10m': return min >= 5000000 && min <= 10000000;
+        case '10m-plus': return min >= 10000000;
+        default: return true;
+      }
+    });
+  }
+
+  // Owner filtering
+  if (ownerFilter !== 'all') {
+    if (ownerFilter === 'unassigned') {
+      filtered = filtered.filter(inv => !inv.owner || inv.owner.trim() === '');
+    } else {
+      filtered = filtered.filter(inv => (inv.owner || '').toLowerCase() === ownerFilter.toLowerCase());
+    }
+  }
+
+  // Unified sorting
+  switch (activeSortBy) {
+    case 'alpha-asc': filtered.sort((a, b) => a.firm.localeCompare(b.firm)); break;
+    case 'alpha-desc': filtered.sort((a, b) => b.firm.localeCompare(a.firm)); break;
+    case 'status': filtered.sort((a, b) => (STATUS_ORDER[a.status] ?? 9) - (STATUS_ORDER[b.status] ?? 9) || a.firm.localeCompare(b.firm)); break;
+    case 'date-new': filtered.sort((a, b) => new Date(b.created || 0) - new Date(a.created || 0)); break;
+    case 'date-old': filtered.sort((a, b) => new Date(a.created || 0) - new Date(b.created || 0)); break;
+    case 'activity': filtered.sort((a, b) => getLastActivity(b) - getLastActivity(a)); break;
+    case 'check-asc': filtered.sort((a, b) => parseMinCheckSize(a.checkSize) - parseMinCheckSize(b.checkSize)); break;
+    case 'check-desc': filtered.sort((a, b) => parseMinCheckSize(b.checkSize) - parseMinCheckSize(a.checkSize)); break;
+  }
 
   if (filtered.length === 0) {
     container.innerHTML = `
@@ -1369,6 +1596,7 @@ function renderCards() {
         ${inv.checkSize ? `<span class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>${esc(inv.checkSize)}</span>` : ''}
         ${inv.owner ? `<span class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${esc(inv.owner)}</span>` : ''}
         <span class="card-nda-badge nda-${inv.nda || 'none'}">${inv.nda === 'signed' ? '✓ NDA' : inv.nda === 'pending' ? '⏳ NDA' : ''}</span>
+        ${inv.email ? `<span class="card-meta-item" style="color:var(--green);font-size:11px;">✉ ${esc(inv.email)}</span>` : ''}
       </div>
       ${hasLinks ? `<div class="card-links" onclick="event.stopPropagation()">
         ${inv.website ? `<a class="card-link" href="${esc(inv.website)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>Website</a>` : ''}
@@ -1423,11 +1651,260 @@ function setTab(tab, btn) {
   renderCards();
 }
 
-function toggleSort(btn) {
-  sortAsc = !sortAsc;
-  btn.textContent = sortAsc ? 'A–Z' : 'Z–A';
-  btn.classList.toggle('active', !sortAsc);
+// ════════════════════════════════════════════════════════════════
+// UNIFIED SORT / FILTER SYSTEM
+// ════════════════════════════════════════════════════════════════
+let activeSortBy = 'alpha-asc';
+let checkSizeFilter = 'all';
+let ownerFilter = 'all';
+
+function parseMinCheckSize(str) {
+  if (!str) return 0;
+  const cleaned = str.replace(/[,\s]/g, '');
+  const match = cleaned.match(/\$?([\d.]+)\s*(K|M|B)?/i);
+  if (!match) return 0;
+  let val = parseFloat(match[1]);
+  const unit = (match[2] || '').toUpperCase();
+  if (unit === 'K') val *= 1000;
+  else if (unit === 'M') val *= 1000000;
+  else if (unit === 'B') val *= 1000000000;
+  else if (val < 100) val *= 1000000;
+  return val;
+}
+
+const STATUS_ORDER = { 'due-diligence': 0, 'nda-sent': 1, 'term-sheet': 2, 'meeting': 3, 'contacted': 4, 'new': 5, 'closed': 6, 'declined': 7, 'archived': 8 };
+
+function getLastActivity(inv) {
+  if (inv.timeline && inv.timeline.length > 0) return new Date(inv.timeline[0].date).getTime();
+  return new Date(inv.created || 0).getTime();
+}
+
+function toggleDropdown(id) {
+  const dd = document.getElementById(id);
+  const wasOpen = dd.classList.contains('open');
+  document.querySelectorAll('.filter-dropdown.open').forEach(d => d.classList.remove('open'));
+  if (!wasOpen) dd.classList.add('open');
+}
+
+function setSortBy(value, itemBtn) {
+  activeSortBy = value;
+  const dd = document.getElementById('sortByDropdown');
+  const btn = document.getElementById('sortByBtn');
+  dd.querySelectorAll('.filter-dropdown-item').forEach(b => b.classList.remove('active'));
+  itemBtn.classList.add('active');
+  btn.textContent = itemBtn.textContent.trim();
+  btn.classList.toggle('active', value !== 'alpha-asc');
+  dd.classList.remove('open');
   renderCards();
+}
+
+function setCheckSizeFilter(value, itemBtn) {
+  checkSizeFilter = value;
+  const dd = document.getElementById('checkSizeDropdown');
+  const btn = document.getElementById('checkSizeBtn');
+  dd.querySelectorAll('.filter-dropdown-item').forEach(b => b.classList.remove('active'));
+  itemBtn.classList.add('active');
+  if (value === 'all') {
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:-2px;margin-right:3px;"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Check Size';
+    btn.classList.remove('active');
+  } else {
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:-2px;margin-right:3px;"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>' + itemBtn.textContent;
+    btn.classList.add('active');
+  }
+  dd.classList.remove('open');
+  renderCards();
+}
+
+function setOwnerFilter(value, itemBtn) {
+  ownerFilter = value;
+  const dd = document.getElementById('ownerDropdown');
+  const btn = document.getElementById('ownerBtn');
+  dd.querySelectorAll('.filter-dropdown-item').forEach(b => b.classList.remove('active'));
+  itemBtn.classList.add('active');
+  if (value === 'all') {
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:-2px;margin-right:3px;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Owner';
+    btn.classList.remove('active');
+  } else {
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:-2px;margin-right:3px;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' + itemBtn.textContent;
+    btn.classList.add('active');
+  }
+  dd.classList.remove('open');
+  renderCards();
+}
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.filter-dropdown-wrap')) {
+    document.querySelectorAll('.filter-dropdown.open').forEach(d => d.classList.remove('open'));
+  }
+});
+
+// ════════════════════════════════════════════════════════════════
+// CONTACT ENRICHMENT ENGINE
+// ════════════════════════════════════════════════════════════════
+let enrichAborted = false;
+let enrichRunning = false;
+
+async function startEnrichAll() {
+  if (enrichRunning) { toast('Enrichment already running', 'error'); return; }
+  if (!serverStatus.anthropic) { toast('AI not configured — admin needs to set ANTHROPIC_API_KEY', 'error'); return; }
+  const targets = investors.filter(inv => !inv.email && (inv.contact || inv.firm) && !['archived', 'declined'].includes(inv.status));
+  if (targets.length === 0) { toast('All active investors already have emails', 'success'); return; }
+  enrichRunning = true; enrichAborted = false;
+  const bar = document.getElementById('enrichBar');
+  const fill = document.getElementById('enrichFill');
+  const status = document.getElementById('enrichStatus');
+  const count = document.getElementById('enrichCount');
+  const enrichBtn = document.getElementById('enrichBtn');
+  bar.classList.add('visible');
+  enrichBtn.style.opacity = '0.5'; enrichBtn.style.pointerEvents = 'none';
+  let found = 0, failed = 0;
+  for (let i = 0; i < targets.length; i++) {
+    if (enrichAborted) break;
+    const inv = targets[i];
+    fill.style.width = Math.round((i / targets.length) * 100) + '%';
+    status.textContent = 'Searching: ' + inv.firm;
+    count.textContent = (i + 1) + ' / ' + targets.length;
+    try {
+      const resp = await fetch('/api/contact-enrich', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contact: inv.contact || '', firm: inv.firm, website: inv.website || '', linkedin: inv.linkedin || '' }) });
+      if (!resp.ok) { failed++; addTimelineEntry(inv.id, '❌ Email lookup failed (' + resp.status + ')'); continue; }
+      const result = await resp.json();
+      const freshInv = investors.find(x => x.id === inv.id);
+      if (freshInv && result.email) {
+        freshInv.email = result.email;
+        addTimelineEntry(inv.id, '📧 Email found: ' + result.email + ' (' + (result.confidence || 'UNKNOWN') + (result.source ? ' — ' + result.source : '') + ')');
+        found++;
+      } else if (freshInv && result.alternateEmails && result.alternateEmails.length > 0) {
+        freshInv.email = result.alternateEmails[0];
+        addTimelineEntry(inv.id, '📧 Possible email: ' + result.alternateEmails[0] + ' (pattern-inferred)');
+        found++;
+      } else { addTimelineEntry(inv.id, '🔍 Email lookup: no results found'); failed++; }
+      if (freshInv && result.contactTitle && !freshInv.contact) freshInv.contact = result.contactTitle;
+      saveData(investors); renderCards();
+    } catch (err) { console.error('Enrich failed for', inv.firm, err); failed++; addTimelineEntry(inv.id, '❌ Email lookup error: ' + err.message); }
+    if (i < targets.length - 1 && !enrichAborted) await new Promise(r => setTimeout(r, 1500));
+  }
+  fill.style.width = '100%';
+  status.textContent = enrichAborted ? 'Cancelled' : 'Done — ' + found + ' found, ' + failed + ' failed';
+  count.textContent = '';
+  enrichRunning = false;
+  enrichBtn.style.opacity = ''; enrichBtn.style.pointerEvents = '';
+  saveData(investors); renderCards();
+  setTimeout(() => { bar.classList.remove('visible'); fill.style.width = '0%'; }, 3000);
+  if (!enrichAborted) toast('Enrichment complete: ' + found + ' emails found' + (failed ? ', ' + failed + ' not found' : ''), found > 0 ? 'success' : '');
+}
+
+function cancelEnrich() {
+  enrichAborted = true;
+  document.getElementById('enrichStatus').textContent = 'Cancelling...';
+  toast('Enrichment cancelled');
+}
+
+// ════════════════════════════════════════════════════════════════
+// BATCH AUTO-RESEARCH (profiles all un-researched investors)
+// ════════════════════════════════════════════════════════════════
+let researchAllRunning = false;
+let researchAllAborted = false;
+
+async function startResearchAll() {
+  if (researchAllRunning) { toast('Research already running', 'error'); return; }
+  if (!serverStatus.anthropic) { toast('AI not configured — admin needs to set ANTHROPIC_API_KEY', 'error'); return; }
+
+  const targets = investors.filter(inv =>
+    !inv.profiledAt && !inv.thesis &&
+    (inv.firm || inv.website) &&
+    !['archived', 'declined'].includes(inv.status)
+  );
+
+  if (targets.length === 0) { toast('All active investors already researched', 'success'); return; }
+
+  researchAllRunning = true;
+  researchAllAborted = false;
+
+  const bar = document.getElementById('enrichBar');
+  const fill = document.getElementById('enrichFill');
+  const status = document.getElementById('enrichStatus');
+  const count = document.getElementById('enrichCount');
+  const btn = document.getElementById('researchAllBtn');
+
+  bar.classList.add('visible');
+  btn.style.opacity = '0.5'; btn.style.pointerEvents = 'none';
+
+  let done = 0, failed = 0;
+
+  for (let i = 0; i < targets.length; i++) {
+    if (researchAllAborted) break;
+
+    const inv = targets[i];
+    fill.style.width = Math.round((i / targets.length) * 100) + '%';
+    status.textContent = '🔍 Researching: ' + inv.firm;
+    count.textContent = (i + 1) + ' / ' + targets.length;
+
+    try {
+      const resp = await fetch('/api/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firm: inv.firm, website: inv.website || '', linkedin: inv.linkedin || '' })
+      });
+
+      if (!resp.ok) {
+        failed++;
+        addTimelineEntry(inv.id, '❌ Auto-research failed (' + resp.status + ')');
+        continue;
+      }
+
+      const profile = await resp.json();
+      const freshInv = investors.find(x => x.id === inv.id);
+      if (freshInv) {
+        const parts = [];
+        if (profile.thesis) parts.push(profile.thesis);
+        if (profile.portfolio) parts.push('Portfolio: ' + profile.portfolio + '.');
+        if (profile.keyPeople) parts.push('Key people: ' + profile.keyPeople + '.');
+        if (profile.aum) parts.push('AUM/Fund size: ' + profile.aum + '.');
+        if (profile.recentActivity) parts.push('Recent activity: ' + profile.recentActivity + '.');
+        if (profile.beautyRelevance) parts.push('Filterbaby relevance: ' + profile.beautyRelevance + '.');
+
+        freshInv.thesis = parts.join(' ');
+        if (profile.stage && !freshInv.stage) freshInv.stage = profile.stage;
+        if (profile.checkSize && !freshInv.checkSize) freshInv.checkSize = profile.checkSize;
+        if (profile.keyPeople && !freshInv.contact) {
+          const firstPerson = profile.keyPeople.split(',')[0]?.split('(')[0]?.trim();
+          if (firstPerson && firstPerson.length < 40) freshInv.contact = firstPerson;
+        }
+        freshInv.profiledAt = new Date().toISOString();
+        addTimelineEntry(inv.id, '✅ Auto-research complete — ' + (profile.beautyRelevance || 'done'));
+        done++;
+      }
+    } catch (err) {
+      console.error('Research failed for', inv.firm, err);
+      failed++;
+      addTimelineEntry(inv.id, '❌ Research error: ' + err.message);
+    }
+
+    saveData(investors);
+    renderCards();
+
+    // Rate limit — 2s between calls (research is heavier than enrichment)
+    if (i < targets.length - 1 && !researchAllAborted) {
+      await new Promise(r => setTimeout(r, 2000));
+    }
+  }
+
+  fill.style.width = '100%';
+  status.textContent = researchAllAborted ? 'Cancelled' : 'Research done — ' + done + ' profiled, ' + failed + ' failed';
+  count.textContent = '';
+  researchAllRunning = false;
+  btn.style.opacity = ''; btn.style.pointerEvents = '';
+  saveData(investors); renderCards();
+  setTimeout(() => { bar.classList.remove('visible'); fill.style.width = '0%'; }, 3000);
+  if (!researchAllAborted) toast('Research complete: ' + done + ' investors profiled', done > 0 ? 'success' : '');
+}
+
+function cancelBatchOp() {
+  enrichAborted = true;
+  researchAllAborted = true;
+  document.getElementById('enrichStatus').textContent = 'Cancelling...';
+  toast('Operation cancelled');
 }
 
 
@@ -1440,14 +1917,12 @@ function openPanel(mode, id) {
   const body = document.getElementById('panelBody');
   const footer = document.getElementById('panelFooter');
   const title = document.getElementById('panelTitle');
-  const quickUpdate = document.getElementById('quickUpdate');
 
   if (mode === 'new') {
     editingId = null;
     title.textContent = 'New Lead';
     body.innerHTML = buildForm({});
-    footer.innerHTML = `<button class="btn btn-primary" onclick="saveLead()">Add Lead</button>`;
-    quickUpdate.classList.remove('visible');
+    footer.innerHTML = `<button class="btn btn-primary" onclick="saveLead()" style="flex:1;">Add Lead</button>`;
   } else {
     const inv = investors.find(i => i.id === id);
     if (!inv) return;
@@ -1455,13 +1930,20 @@ function openPanel(mode, id) {
     title.textContent = inv.firm;
     body.innerHTML = buildForm(inv) + buildTimeline(inv);
     const isProfiled = !!inv.profiledAt;
-    const researchLabel = isProfiled ? '↻ Re-research' : '🔍 Research Firm';
+    const researchLabel = isProfiled ? '↻ Re-research' : '🔍 Research';
     footer.innerHTML = `
-      <button class="btn btn-danger btn-sm" onclick="archiveLead('${inv.id}')" style="flex-shrink:0;">${inv.status === 'archived' ? 'Delete' : 'Archive'}</button>
-      <button class="btn btn-secondary btn-sm" onclick="researchFirm('${inv.id}')" style="flex-shrink:0;" title="Use AI to research this firm's investment profile">${researchLabel}</button>
-      <button class="btn btn-primary" onclick="saveLead()">Save Changes</button>
+      <div style="display:flex;gap:8px;width:100%;flex-direction:column;">
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="quickInput" placeholder="Add a note..." onkeydown="if(event.key==='Enter')addQuickNote()" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:inherit;outline:none;">
+          <button class="btn btn-secondary btn-sm" onclick="addQuickNote()" style="flex-shrink:0;padding:8px 12px;">Note</button>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-danger btn-sm" onclick="archiveLead('${inv.id}')" style="flex-shrink:0;">${inv.status === 'archived' ? 'Delete' : 'Archive'}</button>
+          <button class="btn btn-secondary btn-sm" onclick="researchFirm('${inv.id}')" style="flex-shrink:0;" title="Use AI to research this firm's investment profile">${researchLabel}</button>
+          <button class="btn btn-primary" onclick="saveLead()" style="flex:1;">Save Changes</button>
+        </div>
+      </div>
     `;
-    quickUpdate.classList.add('visible');
   }
 
   panel.classList.add('open');
@@ -1472,7 +1954,6 @@ function openPanel(mode, id) {
 function closePanel() {
   document.getElementById('slidePanel').classList.remove('open');
   document.getElementById('panelOverlay').classList.remove('open');
-  document.getElementById('quickUpdate').classList.remove('visible');
   document.body.style.overflow = '';
   editingId = null;
 }
