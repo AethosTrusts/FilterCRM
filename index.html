@@ -2691,10 +2691,19 @@ async function handleImportFile(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  toast('Reading ' + file.name + '...');
+  // Show progress bar immediately
+  const bar = document.getElementById('enrichBar');
+  const fill = document.getElementById('enrichFill');
+  const status = document.getElementById('enrichStatus');
+  const count = document.getElementById('enrichCount');
+  bar.classList.add('visible');
+  fill.style.width = '0%';
+  status.textContent = '📂 Reading ' + file.name + '...';
+  count.textContent = '';
 
   // Load SheetJS if needed
   if (!window.XLSX) {
+    status.textContent = '📦 Loading Excel parser...';
     await new Promise((resolve, reject) => {
       const s = document.createElement('script');
       s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
@@ -2704,27 +2713,44 @@ async function handleImportFile(event) {
     });
   }
 
+  fill.style.width = '15%';
+
   try {
+    status.textContent = '📊 Parsing spreadsheet...';
     const data = await file.arrayBuffer();
     const wb = XLSX.read(data);
     const allRows = [];
 
-    // Read all sheets
-    for (const name of wb.SheetNames) {
+    for (let si = 0; si < wb.SheetNames.length; si++) {
+      const name = wb.SheetNames[si];
+      status.textContent = '📊 Reading sheet: ' + name;
+      count.textContent = (si + 1) + ' / ' + wb.SheetNames.length + ' sheets';
       const ws = wb.Sheets[name];
       const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
       rows.forEach(r => { r._sheet = name; });
       allRows.push(...rows);
     }
 
+    fill.style.width = '35%';
+
     if (allRows.length === 0) {
+      bar.classList.remove('visible');
       toast('No data found in file', 'error');
       return;
     }
 
-    processImportRows(allRows, file.name);
+    status.textContent = '🔍 Matching ' + allRows.length + ' rows against pipeline...';
+    count.textContent = allRows.length + ' rows found';
+
+    // Small delay so user can see the status
+    await new Promise(r => setTimeout(r, 300));
+
+    // Process with progress
+    await processImportRowsWithProgress(allRows, file.name, bar, fill, status, count);
+
   } catch (err) {
     console.error('Import error:', err);
+    bar.classList.remove('visible');
     toast('Failed to read file: ' + err.message, 'error');
   }
 }
@@ -2770,19 +2796,33 @@ function mapImportStatus(s) {
   return '';
 }
 
-function processImportRows(rows, fileName) {
+async function processImportRowsWithProgress(rows, fileName, bar, fill, status, count) {
   pendingImportActions = [];
 
-  // Build lookup of existing investors by normalized name
   const existingMap = new Map();
   investors.forEach(inv => {
     const n = normFirm(inv.firm);
     if (n) existingMap.set(n, inv);
   });
 
-  for (const row of rows) {
+  let processed = 0;
+  const validRows = rows.filter(row => {
     const firm = findColumnValue(row, 'firm', 'company', 'name', 'fund');
-    if (!firm || firm === '_sheet') continue;
+    return firm && firm !== '_sheet';
+  });
+
+  for (const row of validRows) {
+    const firm = findColumnValue(row, 'firm', 'company', 'name', 'fund');
+    processed++;
+
+    // Update progress bar every few rows
+    if (processed % 3 === 0 || processed === validRows.length) {
+      const pct = 35 + Math.round((processed / validRows.length) * 50);
+      fill.style.width = pct + '%';
+      status.textContent = '🔍 Checking: ' + firm;
+      count.textContent = processed + ' / ' + validRows.length + ' rows';
+      await new Promise(r => setTimeout(r, 0)); // yield to UI
+    }
 
     const contact = findColumnValue(row, 'contact', 'partner', 'person');
     const rawEmail = findColumnValue(row, 'email', 'e-mail');
@@ -2792,26 +2832,24 @@ function processImportRows(rows, fileName) {
     const website = findColumnValue(row, 'website', 'url', 'site');
     const linkedin = findColumnValue(row, 'linkedin');
     const statusRaw = findColumnValue(row, 'status', 'stage');
-    const status = mapImportStatus(statusRaw);
+    const mappedStatus = mapImportStatus(statusRaw);
     const notes = findColumnValue(row, 'notes', 'note', 'materials');
     const checkSize = findColumnValue(row, 'check size', 'check', 'size', 'investment');
     const owner = findColumnValue(row, 'owner', 'lead', 'assigned');
     const thesis = findColumnValue(row, 'thesis', 'strategy', 'investment strategy');
 
-    // Try to match against existing
     const n = normFirm(firm);
     if (!n) continue;
 
     const existing = existingMap.get(n);
 
     if (existing) {
-      // Compute what changed — only non-empty import values that differ
       const changes = {};
       if (contactFromPartner && contactFromPartner !== existing.contact) changes.contact = contactFromPartner;
       if (email && email !== existing.email) changes.email = email;
       if (website && website !== existing.website) changes.website = website;
       if (linkedin && linkedin !== existing.linkedin) changes.linkedin = linkedin;
-      if (status && status !== existing.status) changes.status = status;
+      if (mappedStatus && mappedStatus !== existing.status) changes.status = mappedStatus;
       if (notes && notes !== existing.notes) changes.notes = notes;
       if (checkSize && checkSize !== existing.checkSize) changes.checkSize = checkSize;
       if (owner && owner !== existing.owner && owner !== 'Lead') changes.owner = owner;
@@ -2828,12 +2866,25 @@ function processImportRows(rows, fileName) {
         firm,
         row: {
           firm, contact: contactFromPartner, email, website, linkedin,
-          status: status || 'new', notes, checkSize, owner, thesis,
+          status: mappedStatus || 'new', notes, checkSize, owner, thesis,
           nda: 'none', stage: '', timeline: [], created: new Date().toISOString()
         }
       });
     }
   }
+
+  fill.style.width = '90%';
+  const newCount = pendingImportActions.filter(a => a.action === 'new').length;
+  const updateCount = pendingImportActions.filter(a => a.action === 'update').length;
+  const skipCount = pendingImportActions.filter(a => a.action === 'skip').length;
+  status.textContent = '✅ ' + newCount + ' new, ' + updateCount + ' updates, ' + skipCount + ' unchanged';
+  count.textContent = 'Opening preview...';
+
+  await new Promise(r => setTimeout(r, 600));
+
+  fill.style.width = '100%';
+  bar.classList.remove('visible');
+  fill.style.width = '0%';
 
   showImportPreview(fileName);
 }
@@ -2849,7 +2900,8 @@ function showImportPreview(fileName) {
   const skipCount = pendingImportActions.filter(a => a.action === 'skip').length;
 
   title.textContent = 'Import: ' + fileName;
-  sub.textContent = pendingImportActions.length + ' rows processed';
+  sub.textContent = pendingImportActions.length + ' rows processed from ' +
+    new Set(pendingImportActions.map(a => a._sheet).filter(Boolean)).size + ' sheets';
 
   const summaryHTML = `
     <div class="import-summary">
@@ -2868,7 +2920,6 @@ function showImportPreview(fileName) {
     </div>
   `;
 
-  // Build rows table — show new + update, skip unchanged
   const actionRows = pendingImportActions
     .filter(a => a.action !== 'skip')
     .map(a => {
@@ -2878,18 +2929,19 @@ function showImportPreview(fileName) {
           <td><strong>${esc(a.firm)}</strong></td>
           <td>${esc(a.row.contact || '—')}</td>
           <td>${esc(a.row.email || '—')}</td>
-          <td>${esc(a.row.status || 'new')}</td>
+          <td>${esc(statusLabel(a.row.status) || 'New')}</td>
         </tr>`;
       } else {
         const changeList = Object.entries(a.changes).map(([k, v]) => {
           const oldVal = a.existing[k] || '(empty)';
           const display = k === 'status' ? statusLabel(v) : v;
-          return k + ': ' + display;
-        }).join(', ');
+          const oldDisplay = k === 'status' ? statusLabel(oldVal) : oldVal;
+          return '<strong>' + k + '</strong>: ' + esc(oldDisplay) + ' → ' + esc(display);
+        }).join('<br>');
         return `<tr>
           <td><span class="import-badge badge-update">Update</span></td>
           <td><strong>${esc(a.firm)}</strong></td>
-          <td colspan="3"><div class="import-detail">${esc(changeList)}</div></td>
+          <td colspan="3"><div class="import-detail">${changeList}</div></td>
         </tr>`;
       }
     }).join('');
@@ -2897,7 +2949,7 @@ function showImportPreview(fileName) {
   body.innerHTML = summaryHTML + `
     <table class="import-table">
       <thead><tr><th>Action</th><th>Firm</th><th>Contact</th><th>Email</th><th>Status</th></tr></thead>
-      <tbody>${actionRows || '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-secondary);">No changes to apply</td></tr>'}</tbody>
+      <tbody>${actionRows || '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-secondary);">No changes to apply — all rows match existing data.</td></tr>'}</tbody>
     </table>
   `;
 
@@ -2917,6 +2969,8 @@ function showImportPreview(fileName) {
 
 function commitImport() {
   let added = 0, updated = 0;
+  const addedFirms = [];
+  const updatedFirms = [];
 
   for (const action of pendingImportActions) {
     if (action.action === 'new') {
@@ -2927,6 +2981,7 @@ function commitImport() {
       addTimelineEntry(null, 'Imported from Excel', newInv);
       investors.push(newInv);
       added++;
+      addedFirms.push(action.firm);
     } else if (action.action === 'update') {
       const inv = action.existing;
       const oldStatus = inv.status;
@@ -2937,13 +2992,29 @@ function commitImport() {
         notifySlack('📥 *' + inv.firm + '* updated via import → *' + statusLabel(action.changes.status) + '*');
       }
       updated++;
+      updatedFirms.push(action.firm + ' (' + parts + ')');
     }
   }
 
   saveData(investors);
   renderCards();
   closeImportModal();
+
+  // Show detailed post-commit report in the modal body
+  const total = investors.length;
   pendingImportActions = [];
+
+  // Show progress bar with result summary
+  const bar = document.getElementById('enrichBar');
+  const fill = document.getElementById('enrichFill');
+  const status = document.getElementById('enrichStatus');
+  const count = document.getElementById('enrichCount');
+  bar.classList.add('visible');
+  fill.style.width = '100%';
+  status.textContent = '✅ Imported: ' + added + ' new + ' + updated + ' updated → ' + total + ' total investors';
+  count.textContent = '';
+  setTimeout(() => { bar.classList.remove('visible'); fill.style.width = '0%'; }, 5000);
+
   toast('Import complete: ' + added + ' added, ' + updated + ' updated', 'success');
 }
 
