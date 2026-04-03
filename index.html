@@ -278,6 +278,76 @@ body {
   background: var(--gold-light);
 }
 
+/* ─── IMPORT PREVIEW ─── */
+.import-summary {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.import-stat {
+  flex: 1;
+  min-width: 100px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+.import-stat-val {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px;
+  line-height: 1;
+}
+.import-stat-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 4px;
+}
+.import-stat.new-stat { background: var(--green-light); color: var(--green); }
+.import-stat.update-stat { background: var(--blue-light); color: var(--blue); }
+.import-stat.skip-stat { background: var(--cream); color: var(--text-secondary); }
+.import-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.import-table th {
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  background: var(--cream);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+}
+.import-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.import-table tr:hover td { background: var(--cream); }
+.import-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.import-badge.badge-new { background: var(--green-light); color: var(--green); }
+.import-badge.badge-update { background: var(--blue-light); color: var(--blue); }
+.import-badge.badge-skip { background: var(--cream); color: var(--text-secondary); }
+.import-detail {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
 /* ─── VIEW TOGGLE ─── */
 .view-toggle {
   display: flex;
@@ -1315,6 +1385,11 @@ body {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
       <span>Export</span>
     </button>
+    <button class="header-btn" onclick="triggerImport()" title="Import from Excel">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+      <span>Import</span>
+    </button>
+    <input type="file" id="importFileInput" accept=".xlsx,.xls,.csv" style="display:none;" onchange="handleImportFile(event)">
     <button class="header-btn" onclick="openSettings()" title="Settings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
       <span>Settings</span>
@@ -1460,6 +1535,22 @@ body {
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeSettings()" style="flex:1;">Cancel</button>
       <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- IMPORT PREVIEW MODAL -->
+<div class="modal-overlay" id="importModal" onclick="closeImportModal()">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:640px;max-height:85vh;display:flex;flex-direction:column;">
+    <div class="modal-header">
+      <div class="modal-title" id="importModalTitle">Import Preview</div>
+      <div class="modal-subtitle" id="importModalSub">Review changes before applying</div>
+    </div>
+    <div class="modal-body" id="importModalBody" style="overflow-y:auto;flex:1;"></div>
+    <div class="modal-footer" id="importModalFooter">
+      <button class="btn btn-secondary" onclick="closeImportModal()" style="flex:1;">Cancel</button>
+      <button class="btn btn-primary" onclick="commitImport()" id="importCommitBtn" style="flex:2;">Apply Changes</button>
     </div>
   </div>
 </div>
@@ -2587,6 +2678,281 @@ async function exportToXlsx() {
 
 
 // ════════════════════════════════════════════════════════════════
+// EXCEL IMPORT ENGINE
+// ════════════════════════════════════════════════════════════════
+let pendingImportActions = []; // { action: 'new'|'update', row: {}, existing?: inv, changes?: {} }
+
+function triggerImport() {
+  document.getElementById('importFileInput').value = '';
+  document.getElementById('importFileInput').click();
+}
+
+async function handleImportFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  toast('Reading ' + file.name + '...');
+
+  // Load SheetJS if needed
+  if (!window.XLSX) {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  try {
+    const data = await file.arrayBuffer();
+    const wb = XLSX.read(data);
+    const allRows = [];
+
+    // Read all sheets
+    for (const name of wb.SheetNames) {
+      const ws = wb.Sheets[name];
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+      rows.forEach(r => { r._sheet = name; });
+      allRows.push(...rows);
+    }
+
+    if (allRows.length === 0) {
+      toast('No data found in file', 'error');
+      return;
+    }
+
+    processImportRows(allRows, file.name);
+  } catch (err) {
+    console.error('Import error:', err);
+    toast('Failed to read file: ' + err.message, 'error');
+  }
+}
+
+function normFirm(name) {
+  if (!name) return '';
+  return name.toString().trim().toLowerCase()
+    .replace(/\s+/g, ' ')
+    .replace(/[*()]/g, '')
+    .replace(/\s*(ventures?|capital|partners?|growth|group|fund|llc|inc|corp)\s*/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function findColumnValue(row, ...candidates) {
+  for (const key of Object.keys(row)) {
+    const k = key.toLowerCase().trim();
+    for (const c of candidates) {
+      if (k === c || k.includes(c)) return (row[key] || '').toString().trim();
+    }
+  }
+  return '';
+}
+
+function extractEmailFromStr(str) {
+  if (!str) return '';
+  const m = str.match(/[\w.+-]+@[\w-]+\.[\w.]+/);
+  return m ? m[0] : '';
+}
+
+function mapImportStatus(s) {
+  if (!s) return '';
+  s = s.toString().trim().toLowerCase();
+  if (['new', 'new lead'].includes(s)) return 'new';
+  if (['contacted', 'reached out', 'sent outreach', 'no reply', 'sent'].some(x => s.includes(x))) return 'contacted';
+  if (['meeting', 'scheduling', 'had call', 'call'].some(x => s.includes(x))) return 'meeting';
+  if (['dd', 'due diligence', 'diligence', 'nda'].some(x => s.includes(x))) return 'due-diligence';
+  if (['nda sent', 'nda out'].some(x => s.includes(x))) return 'nda-sent';
+  if (['term sheet', 'term-sheet'].some(x => s.includes(x))) return 'term-sheet';
+  if (['closed', 'committed'].some(x => s.includes(x))) return 'closed';
+  if (['passed', 'not a fit', 'not interested', 'declined', 'ghosted'].some(x => s.includes(x))) return 'declined';
+  if (['archived', 'too big', 'no fit'].some(x => s.includes(x))) return 'archived';
+  return '';
+}
+
+function processImportRows(rows, fileName) {
+  pendingImportActions = [];
+
+  // Build lookup of existing investors by normalized name
+  const existingMap = new Map();
+  investors.forEach(inv => {
+    const n = normFirm(inv.firm);
+    if (n) existingMap.set(n, inv);
+  });
+
+  for (const row of rows) {
+    const firm = findColumnValue(row, 'firm', 'company', 'name', 'fund');
+    if (!firm || firm === '_sheet') continue;
+
+    const contact = findColumnValue(row, 'contact', 'partner', 'person');
+    const rawEmail = findColumnValue(row, 'email', 'e-mail');
+    const partnerCol = findColumnValue(row, 'partner(s)', 'partners');
+    const email = rawEmail || extractEmailFromStr(partnerCol);
+    const contactFromPartner = contact || (partnerCol ? partnerCol.replace(/<[^>]+>/g, '').replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, '').split(',')[0].trim() : '');
+    const website = findColumnValue(row, 'website', 'url', 'site');
+    const linkedin = findColumnValue(row, 'linkedin');
+    const statusRaw = findColumnValue(row, 'status', 'stage');
+    const status = mapImportStatus(statusRaw);
+    const notes = findColumnValue(row, 'notes', 'note', 'materials');
+    const checkSize = findColumnValue(row, 'check size', 'check', 'size', 'investment');
+    const owner = findColumnValue(row, 'owner', 'lead', 'assigned');
+    const thesis = findColumnValue(row, 'thesis', 'strategy', 'investment strategy');
+
+    // Try to match against existing
+    const n = normFirm(firm);
+    if (!n) continue;
+
+    const existing = existingMap.get(n);
+
+    if (existing) {
+      // Compute what changed — only non-empty import values that differ
+      const changes = {};
+      if (contactFromPartner && contactFromPartner !== existing.contact) changes.contact = contactFromPartner;
+      if (email && email !== existing.email) changes.email = email;
+      if (website && website !== existing.website) changes.website = website;
+      if (linkedin && linkedin !== existing.linkedin) changes.linkedin = linkedin;
+      if (status && status !== existing.status) changes.status = status;
+      if (notes && notes !== existing.notes) changes.notes = notes;
+      if (checkSize && checkSize !== existing.checkSize) changes.checkSize = checkSize;
+      if (owner && owner !== existing.owner && owner !== 'Lead') changes.owner = owner;
+      if (thesis && thesis !== existing.thesis) changes.thesis = thesis;
+
+      if (Object.keys(changes).length > 0) {
+        pendingImportActions.push({ action: 'update', firm, existing, changes, statusRaw });
+      } else {
+        pendingImportActions.push({ action: 'skip', firm, reason: 'No changes' });
+      }
+    } else {
+      pendingImportActions.push({
+        action: 'new',
+        firm,
+        row: {
+          firm, contact: contactFromPartner, email, website, linkedin,
+          status: status || 'new', notes, checkSize, owner, thesis,
+          nda: 'none', stage: '', timeline: [], created: new Date().toISOString()
+        }
+      });
+    }
+  }
+
+  showImportPreview(fileName);
+}
+
+function showImportPreview(fileName) {
+  const modal = document.getElementById('importModal');
+  const body = document.getElementById('importModalBody');
+  const title = document.getElementById('importModalTitle');
+  const sub = document.getElementById('importModalSub');
+
+  const newCount = pendingImportActions.filter(a => a.action === 'new').length;
+  const updateCount = pendingImportActions.filter(a => a.action === 'update').length;
+  const skipCount = pendingImportActions.filter(a => a.action === 'skip').length;
+
+  title.textContent = 'Import: ' + fileName;
+  sub.textContent = pendingImportActions.length + ' rows processed';
+
+  const summaryHTML = `
+    <div class="import-summary">
+      <div class="import-stat new-stat">
+        <div class="import-stat-val">${newCount}</div>
+        <div class="import-stat-label">New</div>
+      </div>
+      <div class="import-stat update-stat">
+        <div class="import-stat-val">${updateCount}</div>
+        <div class="import-stat-label">Updates</div>
+      </div>
+      <div class="import-stat skip-stat">
+        <div class="import-stat-val">${skipCount}</div>
+        <div class="import-stat-label">Unchanged</div>
+      </div>
+    </div>
+  `;
+
+  // Build rows table — show new + update, skip unchanged
+  const actionRows = pendingImportActions
+    .filter(a => a.action !== 'skip')
+    .map(a => {
+      if (a.action === 'new') {
+        return `<tr>
+          <td><span class="import-badge badge-new">New</span></td>
+          <td><strong>${esc(a.firm)}</strong></td>
+          <td>${esc(a.row.contact || '—')}</td>
+          <td>${esc(a.row.email || '—')}</td>
+          <td>${esc(a.row.status || 'new')}</td>
+        </tr>`;
+      } else {
+        const changeList = Object.entries(a.changes).map(([k, v]) => {
+          const oldVal = a.existing[k] || '(empty)';
+          const display = k === 'status' ? statusLabel(v) : v;
+          return k + ': ' + display;
+        }).join(', ');
+        return `<tr>
+          <td><span class="import-badge badge-update">Update</span></td>
+          <td><strong>${esc(a.firm)}</strong></td>
+          <td colspan="3"><div class="import-detail">${esc(changeList)}</div></td>
+        </tr>`;
+      }
+    }).join('');
+
+  body.innerHTML = summaryHTML + `
+    <table class="import-table">
+      <thead><tr><th>Action</th><th>Firm</th><th>Contact</th><th>Email</th><th>Status</th></tr></thead>
+      <tbody>${actionRows || '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-secondary);">No changes to apply</td></tr>'}</tbody>
+    </table>
+  `;
+
+  const commitBtn = document.getElementById('importCommitBtn');
+  if (newCount + updateCount === 0) {
+    commitBtn.textContent = 'Nothing to Import';
+    commitBtn.disabled = true;
+    commitBtn.style.opacity = '0.5';
+  } else {
+    commitBtn.textContent = 'Apply ' + (newCount + updateCount) + ' Changes';
+    commitBtn.disabled = false;
+    commitBtn.style.opacity = '';
+  }
+
+  modal.style.display = 'flex';
+}
+
+function commitImport() {
+  let added = 0, updated = 0;
+
+  for (const action of pendingImportActions) {
+    if (action.action === 'new') {
+      const newInv = {
+        ...action.row,
+        id: 'inv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)
+      };
+      addTimelineEntry(null, 'Imported from Excel', newInv);
+      investors.push(newInv);
+      added++;
+    } else if (action.action === 'update') {
+      const inv = action.existing;
+      const oldStatus = inv.status;
+      Object.assign(inv, action.changes);
+      const parts = Object.keys(action.changes).join(', ');
+      addTimelineEntry(inv.id, '📥 Excel import updated: ' + parts);
+      if (action.changes.status && oldStatus !== action.changes.status) {
+        notifySlack('📥 *' + inv.firm + '* updated via import → *' + statusLabel(action.changes.status) + '*');
+      }
+      updated++;
+    }
+  }
+
+  saveData(investors);
+  renderCards();
+  closeImportModal();
+  pendingImportActions = [];
+  toast('Import complete: ' + added + ' added, ' + updated + ' updated', 'success');
+}
+
+function closeImportModal() {
+  document.getElementById('importModal').style.display = 'none';
+}
+
+
+// ════════════════════════════════════════════════════════════════
 // SETTINGS (read-only server status)
 // ════════════════════════════════════════════════════════════════
 function openSettings() {
@@ -3252,6 +3618,7 @@ document.addEventListener('keydown', e => {
     closePanel();
     closeSettings();
     closeTemplates();
+    closeImportModal();
   }
 });
 
