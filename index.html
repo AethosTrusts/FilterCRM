@@ -1670,9 +1670,9 @@ let settings = loadSettings();
 let currentTab = 'all';
 let editingId = null;
 
-// Seed data if empty
-if (investors.length === 0) {
-  const seed = [
+// Seed data — used for initial database population and migration
+function getSeedData() {
+  return [
     { firm: 'True Beauty Ventures', contact: 'Cristina Nuñez', email: '', stage: 'Seed–Series B', checkSize: '$2–5M', status: 'new', nda: 'none', owner: 'Andrew', website: 'https://truebeautyventures.com', linkedin: 'https://www.linkedin.com/company/true-beauty-ventures', thesis: 'Exclusively beauty & wellness. Backs "problem-solution" brands solving real consumer pain points with innovative products. K18 (hair repair, exited to Unilever ~$500M), Crown Affair, Caliray, Dieux, Vacation, Jupiter. Founded by Rich Gersten (ex-Tengram, North Castle) and Cristina Nuñez (ex-L Catterton). Also runs Bridge Mentorship for emerging beauty founders.', notes: 'Premier target. Problem-solution thesis maps perfectly to FB water-as-skincare positioning.', timeline: [], created: new Date().toISOString() },
     { firm: 'Newbound Venture Capital', contact: 'Maggie Abeles', email: '', stage: 'Seed–Series A', checkSize: '$500K–$3M', status: 'new', nda: 'none', owner: 'Andrew', website: 'https://newboundvc.com', linkedin: 'https://www.linkedin.com/company/newbound-venture-capital', thesis: 'Early-stage beauty, wellness, and personal care. Invests in founder-led brands with strong product-market fit and clinical or cultural credibility. Portfolio: K18 (exited to Unilever), Iris&Romeo, Mother Science, The 7 Virtues, Chris McMillan. Beauty Independent 2024 Beacon Award finalist for Best Seed + Small Growth Investor.', notes: 'K18 co-investor. Right stage, right check size, right thesis for FB.', timeline: [], created: new Date().toISOString() },
     { firm: 'Willow Growth Partners', contact: 'Deborah Benton', email: '', stage: 'Seed', checkSize: '$2–4M', status: 'new', nda: 'none', owner: 'Andrew', website: 'https://willowgrowth.com', linkedin: 'https://www.linkedin.com/company/willow-growth-partners', thesis: 'First institutional capital for consumer brands at $2–5M trailing revenue. $28M Fund I. 75% of portfolio has female or minority founders. Targets sub-$10M valuations. Portfolio: YSE Beauty, Bubble, Dae, Kosas, Jupiter, Uoma Beauty, Perelel, Manscaped. Founded by Deborah Benton (ex-Nasty Gal president/COO) and Amanda Schutzbank.', notes: 'Values-led fund. Perfect check size. Strong founder networks in beauty.', timeline: [], created: new Date().toISOString() },
@@ -1810,9 +1810,6 @@ if (investors.length === 0) {
     { firm: 'TSG', contact: 'comet cofee', email: '', stage: '', checkSize: '', status: 'new', nda: 'none', owner: 'Xin', website: '', linkedin: '', thesis: 'Portfolio: comet cofee, elf, it cosmetics, phlur', notes: '50M+', timeline: [], created: new Date().toISOString() },
 
   ];
-  seed.forEach((s, i) => { s.id = 'inv_' + Date.now() + '_' + i; });
-  investors = seed;
-  saveData(investors);
 }
 
 
@@ -3031,7 +3028,7 @@ function showImportPreview(fileName) {
   modal.style.display = 'flex';
 }
 
-function commitImport() {
+async function commitImport() {
   let added = 0, updated = 0;
   const addedFirms = [];
   const updatedFirms = [];
@@ -3061,6 +3058,7 @@ function commitImport() {
   }
 
   saveData(investors);
+  await saveAllInvestors();
   renderCards();
   closeImportModal();
 
@@ -3739,17 +3737,42 @@ function composeQuickEmail(investorId) {
   const serverData = await loadDataFromServer();
 
   if (serverData && serverData.length > 0) {
+    // Server has data — use it as source of truth
     investors = serverData;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(investors));
     dbReady = true;
+
+    // Check if seed data has investors not yet in the database (migration)
+    const serverIds = new Set(serverData.map(i => i.firm.toLowerCase().trim()));
+    const seedInvestors = getSeedData();
+    const missing = seedInvestors.filter(s => !serverIds.has(s.firm.toLowerCase().trim()));
+
+    if (missing.length > 0) {
+      toast('Syncing ' + missing.length + ' missing investors to database...');
+      missing.forEach((s, i) => { s.id = 'inv_seed_' + Date.now() + '_' + i; });
+      investors = [...investors, ...missing];
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(investors));
+      await saveAllInvestors();
+      toast(missing.length + ' investors synced', 'success');
+    }
   } else if (investors.length > 0) {
-    // Database is empty but we have seed/localStorage data — push it to server
+    // Database is empty but localStorage has data — seed the DB
     toast('Seeding database with ' + investors.length + ' investors...');
     await saveAllInvestors();
     dbReady = true;
     toast('Database seeded', 'success');
   } else {
-    dbReady = true;
+    // Nothing anywhere — use seed data
+    const seedInvestors = getSeedData();
+    if (seedInvestors.length > 0) {
+      seedInvestors.forEach((s, i) => { s.id = 'inv_seed_' + Date.now() + '_' + i; });
+      investors = seedInvestors;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(investors));
+      toast('Seeding database with ' + investors.length + ' investors...');
+      await saveAllInvestors();
+      dbReady = true;
+      toast('Database seeded', 'success');
+    }
   }
 
   renderCards();
