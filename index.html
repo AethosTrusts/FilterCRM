@@ -1585,14 +1585,77 @@ const DEFAULT_SETTINGS = {
 let serverStatus = { anthropic: false, slack: false, pandadoc: false, auth: false };
 let currentUser = null; // { email, name, picture }
 
-function loadData() {
+// ── Supabase-backed data layer ──
+let dbReady = false;
+
+async function loadDataFromServer() {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-  } catch { return []; }
+    const resp = await fetch('/api/db');
+    if (!resp.ok) throw new Error('DB load failed: ' + resp.status);
+    return await resp.json();
+  } catch (e) {
+    console.error('Failed to load from server, falling back to localStorage:', e);
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; }
+  }
 }
+
+async function saveInvestor(inv) {
+  try {
+    const resp = await fetch('/api/db?action=upsert', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(inv)
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      console.error('Save failed:', err);
+      toast('Save failed — check console', 'error');
+    }
+  } catch (e) {
+    console.error('Save error:', e);
+  }
+  // Also update localStorage as cache
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(investors));
+}
+
+async function saveAllInvestors() {
+  try {
+    const resp = await fetch('/api/db?action=bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(investors)
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      console.error('Bulk save failed:', err);
+    }
+  } catch (e) {
+    console.error('Bulk save error:', e);
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(investors));
+}
+
+async function deleteInvestorFromServer(id) {
+  try {
+    await fetch('/api/db?action=delete&id=' + encodeURIComponent(id), { method: 'DELETE' });
+  } catch (e) {
+    console.error('Delete error:', e);
+  }
+}
+
+// Legacy wrappers — saveData now triggers server save
 function saveData(data) {
+  // Debounced batch save — collects rapid saves into one bulk call
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  if (saveData._timer) clearTimeout(saveData._timer);
+  saveData._timer = setTimeout(() => saveAllInvestors(), 800);
 }
+
+function loadData() {
+  // Synchronous fallback for initial load — real data comes from async init
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; }
+}
+
 function loadSettings() {
   try {
     return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(SETTINGS_KEY)) };
@@ -2482,6 +2545,7 @@ function archiveLead(id) {
   if (inv.status === 'archived') {
     if (confirm(`Permanently delete ${inv.firm}?`)) {
       investors = investors.filter(i => i.id !== id);
+      deleteInvestorFromServer(id);
       saveData(investors);
       renderCards();
       closePanel();
@@ -3666,15 +3730,33 @@ function composeQuickEmail(investorId) {
   // Check auth first
   const authed = await checkAuth();
   
-  // Always fetch server status and render
+  // Always fetch server status
   await fetchServerStatus();
   updateSetupBanner();
+
+  // Load investors from Supabase
+  toast('Loading pipeline...');
+  const serverData = await loadDataFromServer();
+
+  if (serverData && serverData.length > 0) {
+    investors = serverData;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(investors));
+    dbReady = true;
+  } else if (investors.length > 0) {
+    // Database is empty but we have seed/localStorage data — push it to server
+    toast('Seeding database with ' + investors.length + ' investors...');
+    await saveAllInvestors();
+    dbReady = true;
+    toast('Database seeded', 'success');
+  } else {
+    dbReady = true;
+  }
+
   renderCards();
 
   // If authenticated, auto-set owner for new leads
   if (currentUser) {
     const firstName = currentUser.name?.split(' ')[0] || currentUser.email?.split('@')[0];
-    // Ensure current user is in team members list
     const members = settings.teamMembers.split(',').map(m => m.trim());
     if (firstName && !members.includes(firstName)) {
       settings.teamMembers = [...members, firstName].filter(Boolean).join(', ');
