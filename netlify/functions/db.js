@@ -116,6 +116,8 @@ function appToDb(inv) {
     thesis: inv.thesis || '',
     notes: inv.notes || '',
     timeline: JSON.stringify(inv.timeline || []),
+    last_contact: inv.lastContact || null,
+    next_meeting: inv.nextMeeting || null,
     profiled_at: inv.profiledAt || null,
     created_at: inv.created || new Date().toISOString()
   };
@@ -143,6 +145,8 @@ function dbToApp(row) {
     thesis: row.thesis || '',
     notes: row.notes || '',
     timeline: timeline,
+    lastContact: row.last_contact || '',
+    nextMeeting: row.next_meeting || '',
     profiledAt: row.profiled_at || '',
     created: row.created_at || ''
   };
