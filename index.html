@@ -1921,8 +1921,8 @@ function renderCards() {
         ${inv.owner ? `<span class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${esc(inv.owner)}</span>` : ''}
         <span class="card-nda-badge nda-${inv.nda || 'none'}">${inv.nda === 'signed' ? '✓ NDA' : inv.nda === 'pending' ? '⏳ NDA' : ''}</span>
         ${inv.email ? `<span class="card-meta-item" style="color:var(--green);font-size:11px;">✉ ${esc(inv.email)}</span>` : ''}
-        ${inv.nextMeeting ? `<span class="card-meta-item" style="color:var(--gold-dark);font-size:11px;">📅 ${new Date(inv.nextMeeting + 'T00:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric' })}</span>` : ''}
-        ${inv.lastContact ? `<span class="card-meta-item" style="font-size:11px;">Last: ${new Date(inv.lastContact).toLocaleDateString('en-US', { month:'short', day:'numeric' })}</span>` : ''}
+        ${inv.nextMeeting ? `<span class="card-meta-item" style="color:var(--gold-dark);font-size:11px;">📅 ${new Date(inv.nextMeeting + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric' })}</span>` : ''}
+        ${inv.lastContact ? `<span class="card-meta-item" style="font-size:11px;">Last: ${new Date(inv.lastContact + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric' })}</span>` : ''}
       </div>
       ${hasLinks ? `<div class="card-links" onclick="event.stopPropagation()">
         ${inv.website ? `<a class="card-link" href="${esc(inv.website)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>Website</a>` : ''}
@@ -2016,7 +2016,7 @@ function renderBoard() {
             ${inv.checkSize ? `<span class="board-cell-tag check">${esc(inv.checkSize)}</span>` : ''}
             ${inv.email ? `<span class="board-cell-tag email">✉</span>` : ''}
             ${inv.nda === 'signed' ? `<span class="board-cell-tag nda">NDA ✓</span>` : inv.nda === 'pending' ? `<span class="board-cell-tag nda">NDA ⏳</span>` : ''}
-            ${inv.nextMeeting ? `<span class="board-cell-tag meeting-date">📅 ${new Date(inv.nextMeeting).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>` : inv.lastContact ? `<span class="board-cell-tag date">Last: ${new Date(inv.lastContact).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>` : ''}
+            ${inv.nextMeeting ? `<span class="board-cell-tag meeting-date">📅 ${new Date(inv.nextMeeting + 'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>` : inv.lastContact ? `<span class="board-cell-tag date">Last: ${new Date(inv.lastContact + 'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>` : ''}
           </div>
         </div>
       `).join('')
@@ -2477,7 +2477,7 @@ function buildForm(inv) {
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">Last Contact</label>
-        <input class="form-input" id="fLastContact" type="date" value="${inv.lastContact || ''}">
+        <input class="form-input" id="fLastContact" type="date" value="${inv.lastContact ? inv.lastContact.substring(0,10) : ''}">
       </div>
       <div class="form-group">
         <label class="form-label">Next Meeting</label>
