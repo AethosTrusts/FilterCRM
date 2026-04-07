@@ -101,7 +101,7 @@ exports.handler = async function(event, context) {
 
 // Convert app investor object → Supabase row (snake_case, flatten timeline to JSONB)
 function appToDb(inv) {
-  return {
+  var row = {
     id: inv.id,
     firm: inv.firm || '',
     contact: inv.contact || '',
@@ -116,11 +116,16 @@ function appToDb(inv) {
     thesis: inv.thesis || '',
     notes: inv.notes || '',
     timeline: JSON.stringify(inv.timeline || []),
-    last_contact: inv.lastContact && inv.lastContact.length >= 10 ? inv.lastContact : null,
-    next_meeting: inv.nextMeeting && inv.nextMeeting.length >= 10 ? inv.nextMeeting : null,
-    profiled_at: inv.profiledAt && inv.profiledAt.length > 0 ? inv.profiledAt : null,
     created_at: inv.created || new Date().toISOString()
   };
+
+  // Only include date fields if they have valid values — omit entirely if empty
+  // This prevents 400 errors if columns don't exist yet or values are invalid
+  if (inv.lastContact && inv.lastContact.length >= 10) row.last_contact = inv.lastContact;
+  if (inv.nextMeeting && inv.nextMeeting.length >= 10) row.next_meeting = inv.nextMeeting;
+  if (inv.profiledAt && inv.profiledAt.length > 4) row.profiled_at = inv.profiledAt;
+
+  return row;
 }
 
 // Convert Supabase row → app investor object (camelCase)
