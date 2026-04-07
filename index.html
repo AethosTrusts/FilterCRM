@@ -531,10 +531,25 @@ body {
 /* ─── INVESTOR CARDS ─── */
 .cards-container {
   padding: 12px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
   padding-bottom: 100px;
+}
+
+@media (min-width: 640px) {
+  .cards-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 16px 20px 100px;
+  }
+}
+@media (min-width: 1100px) {
+  .cards-container {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 1200px;
+    margin: 0 auto;
+  }
 }
 .investor-card {
   background: var(--card-bg);
@@ -1342,20 +1357,6 @@ body {
   .form-row { grid-template-columns: 1fr; }
   .header-btn span { display: none; }
 }
-@media (min-width: 768px) {
-  .cards-container {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-}
-@media (min-width: 1200px) {
-  .cards-container {
-    grid-template-columns: repeat(3, 1fr);
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-}
 </style>
 </head>
 <body>
@@ -1916,6 +1917,8 @@ function renderCards() {
         ${inv.owner ? `<span class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${esc(inv.owner)}</span>` : ''}
         <span class="card-nda-badge nda-${inv.nda || 'none'}">${inv.nda === 'signed' ? '✓ NDA' : inv.nda === 'pending' ? '⏳ NDA' : ''}</span>
         ${inv.email ? `<span class="card-meta-item" style="color:var(--green);font-size:11px;">✉ ${esc(inv.email)}</span>` : ''}
+        ${inv.nextMeeting ? `<span class="card-meta-item" style="color:var(--gold-dark);font-size:11px;">📅 ${new Date(inv.nextMeeting).toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' })}</span>` : ''}
+        ${inv.lastContact ? `<span class="card-meta-item" style="font-size:11px;">Last: ${new Date(inv.lastContact).toLocaleDateString('en-US', { month:'short', day:'numeric' })}</span>` : ''}
       </div>
       ${hasLinks ? `<div class="card-links" onclick="event.stopPropagation()">
         ${inv.website ? `<a class="card-link" href="${esc(inv.website)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>Website</a>` : ''}
@@ -2466,6 +2469,16 @@ function buildForm(inv) {
       <label class="form-label">Investment Stage</label>
       <input class="form-input" id="fStage" value="${esc(inv.stage || '')}" placeholder="e.g. Seed–Series A">
     </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Last Contact</label>
+        <input class="form-input" id="fLastContact" type="date" value="${inv.lastContact || ''}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Next Meeting</label>
+        <input class="form-input" id="fNextMeeting" type="datetime-local" value="${inv.nextMeeting || ''}">
+      </div>
+    </div>
     <div class="form-group">
       <label class="form-label">Investment Strategy / Thesis</label>
       <textarea class="form-textarea" id="fThesis" style="min-height:100px" placeholder="Firm's investment focus, portfolio highlights, key partners, sector expertise...">${esc(inv.thesis || '')}</textarea>
@@ -2515,6 +2528,8 @@ function saveLead() {
     checkSize: document.getElementById('fCheckSize').value.trim(),
     owner: document.getElementById('fOwner').value,
     stage: document.getElementById('fStage').value.trim(),
+    lastContact: document.getElementById('fLastContact').value || '',
+    nextMeeting: document.getElementById('fNextMeeting').value || '',
     thesis: document.getElementById('fThesis').value.trim(),
     notes: document.getElementById('fNotes').value.trim(),
   };
