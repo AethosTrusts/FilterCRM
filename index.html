@@ -1644,9 +1644,11 @@ async function saveAllInvestors() {
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}));
       console.error('Bulk save failed:', err);
+      toast('⚠️ Database save failed — changes saved locally only', 'error');
     }
   } catch (e) {
     console.error('Bulk save error:', e);
+    toast('⚠️ Database unreachable — changes saved locally only', 'error');
   }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(investors));
 }
