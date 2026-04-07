@@ -479,6 +479,8 @@ body {
 .board-cell-tag.check { background: var(--green-light); color: var(--green); }
 .board-cell-tag.email { background: var(--green-light); color: var(--green); }
 .board-cell-tag.nda { background: var(--orange-light); color: var(--orange); }
+.board-cell-tag.date { background: none; color: var(--text-secondary); margin-left: auto; font-size: 9px; font-weight: 400; }
+.board-cell-tag.meeting-date { background: var(--gold-light); color: var(--gold-dark); margin-left: auto; }
 .board-empty {
   padding: 16px 10px;
   text-align: center;
@@ -2012,6 +2014,7 @@ function renderBoard() {
             ${inv.checkSize ? `<span class="board-cell-tag check">${esc(inv.checkSize)}</span>` : ''}
             ${inv.email ? `<span class="board-cell-tag email">✉</span>` : ''}
             ${inv.nda === 'signed' ? `<span class="board-cell-tag nda">NDA ✓</span>` : inv.nda === 'pending' ? `<span class="board-cell-tag nda">NDA ⏳</span>` : ''}
+            ${inv.nextMeeting ? `<span class="board-cell-tag meeting-date">📅 ${new Date(inv.nextMeeting).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>` : inv.lastContact ? `<span class="board-cell-tag date">Last: ${new Date(inv.lastContact).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>` : ''}
           </div>
         </div>
       `).join('')
