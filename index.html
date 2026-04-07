@@ -587,6 +587,7 @@ body {
 .status-closed { background: var(--green-light); color: var(--green); }
 .status-archived { background: #EEEDEA; color: #999; }
 .status-declined { background: var(--red-light); color: var(--red); }
+.status-ghosted { background: #F5EAF0; color: #8C4A6A; }
 
 .card-meta {
   display: flex;
@@ -659,6 +660,17 @@ body {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+.card-activity {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ─── THESIS BLOCK (panel) ─── */
@@ -1444,6 +1456,7 @@ body {
   <button class="tab-btn" data-tab="due-diligence" onclick="setTab('due-diligence', this)">Due Diligence<span class="tab-count" id="countDd">0</span></button>
   <button class="tab-btn" data-tab="nda-sent" onclick="setTab('nda-sent', this)">NDA<span class="tab-count" id="countNda">0</span></button>
   <button class="tab-btn" data-tab="term-sheet" onclick="setTab('term-sheet', this)">Term Sheet<span class="tab-count" id="countTs">0</span></button>
+  <button class="tab-btn" data-tab="ghosted" onclick="setTab('ghosted', this)">Ghosted<span class="tab-count" id="countGhosted">0</span></button>
   <button class="tab-btn" data-tab="archived" onclick="setTab('archived', this)">Archived<span class="tab-count" id="countArchived">0</span></button>
 </div>
 
@@ -1824,9 +1837,10 @@ function renderCards() {
   const search = document.getElementById('searchInput').value.toLowerCase();
 
   let filtered = investors.filter(inv => {
-    if (currentTab !== 'all' && currentTab !== 'archived') return inv.status === currentTab && inv.status !== 'archived' && inv.status !== 'declined';
+    if (currentTab === 'ghosted') return inv.status === 'ghosted';
     if (currentTab === 'archived') return inv.status === 'archived' || inv.status === 'declined';
-    return inv.status !== 'archived' && inv.status !== 'declined';
+    if (currentTab !== 'all') return inv.status === currentTab && !['archived','declined','ghosted'].includes(inv.status);
+    return !['archived','declined','ghosted'].includes(inv.status);
   });
 
   if (search) {
@@ -1909,6 +1923,7 @@ function renderCards() {
       </div>` : ''}
       ${inv.thesis ? `<div class="card-thesis">${esc(inv.thesis)}</div>` : ''}
       ${inv.notes ? `<div class="card-note">${esc(inv.notes)}</div>` : ''}
+      ${inv.timeline && inv.timeline.length > 0 ? `<div class="card-activity">${esc(inv.timeline[0].text)}${inv.timeline[0].date ? ' · ' + new Date(inv.timeline[0].date).toLocaleDateString('en-US', { month:'short', day:'numeric' }) : ''}</div>` : ''}
     </div>
   `}).join('');
 
@@ -1916,7 +1931,7 @@ function renderCards() {
 }
 
 function updateCounts() {
-  const active = investors.filter(i => !['archived','declined'].includes(i.status));
+  const active = investors.filter(i => !['archived','declined','ghosted'].includes(i.status));
   const all = active.length;
   document.getElementById('statTotal').textContent = investors.length;
   document.getElementById('statActive').textContent = all;
@@ -1930,6 +1945,7 @@ function updateCounts() {
   document.getElementById('countDd').textContent = investors.filter(i => i.status === 'due-diligence').length;
   document.getElementById('countNda').textContent = investors.filter(i => i.status === 'nda-sent').length;
   document.getElementById('countTs').textContent = investors.filter(i => i.status === 'term-sheet').length;
+  document.getElementById('countGhosted').textContent = investors.filter(i => i.status === 'ghosted').length;
   document.getElementById('countArchived').textContent = investors.filter(i => ['archived','declined'].includes(i.status)).length;
 }
 
@@ -1957,6 +1973,7 @@ const BOARD_STAGES = [
   { key: 'nda-sent', label: 'NDA Sent', color: 'var(--green)' },
   { key: 'term-sheet', label: 'Term Sheet', color: 'var(--green)' },
   { key: 'closed', label: 'Closed', color: 'var(--green)' },
+  { key: 'ghosted', label: 'Ghosted', color: '#8C4A6A' },
   { key: 'declined', label: 'Passed', color: 'var(--red)' },
   { key: 'archived', label: 'Archived', color: 'var(--text-secondary)' },
 ];
@@ -2013,7 +2030,7 @@ function renderBoard() {
 }
 
 function statusLabel(s) {
-  const map = { 'new':'New', 'contacted':'Contacted', 'meeting':'Meeting', 'due-diligence':'DD', 'nda-sent':'NDA Sent', 'term-sheet':'Term Sheet', 'closed':'Closed', 'archived':'Archived', 'declined':'Declined' };
+  const map = { 'new':'New', 'contacted':'Contacted', 'meeting':'Meeting', 'due-diligence':'DD', 'nda-sent':'NDA Sent', 'term-sheet':'Term Sheet', 'closed':'Closed', 'ghosted':'Ghosted', 'archived':'Archived', 'declined':'Declined' };
   return map[s] || s;
 }
 
@@ -2056,7 +2073,7 @@ function parseMinCheckSize(str) {
   return val;
 }
 
-const STATUS_ORDER = { 'due-diligence': 0, 'nda-sent': 1, 'term-sheet': 2, 'meeting': 3, 'contacted': 4, 'new': 5, 'closed': 6, 'declined': 7, 'archived': 8 };
+const STATUS_ORDER = { 'due-diligence': 0, 'nda-sent': 1, 'term-sheet': 2, 'meeting': 3, 'contacted': 4, 'new': 5, 'closed': 6, 'ghosted': 7, 'declined': 8, 'archived': 9 };
 
 function getLastActivity(inv) {
   if (inv.timeline && inv.timeline.length > 0) return new Date(inv.timeline[0].date).getTime();
@@ -2418,6 +2435,7 @@ function buildForm(inv) {
           <option value="nda-sent" ${inv.status==='nda-sent'?'selected':''}>NDA Sent</option>
           <option value="term-sheet" ${inv.status==='term-sheet'?'selected':''}>Term Sheet</option>
           <option value="closed" ${inv.status==='closed'?'selected':''}>Closed</option>
+          <option value="ghosted" ${inv.status==='ghosted'?'selected':''}>Ghosted</option>
           <option value="declined" ${inv.status==='declined'?'selected':''}>Declined</option>
           <option value="archived" ${inv.status==='archived'?'selected':''}>Archived</option>
         </select>
@@ -2852,7 +2870,8 @@ function mapImportStatus(s) {
   if (['nda sent', 'nda out'].some(x => s.includes(x))) return 'nda-sent';
   if (['term sheet', 'term-sheet'].some(x => s.includes(x))) return 'term-sheet';
   if (['closed', 'committed'].some(x => s.includes(x))) return 'closed';
-  if (['passed', 'not a fit', 'not interested', 'declined', 'ghosted'].some(x => s.includes(x))) return 'declined';
+  if (s.includes('ghosted')) return 'ghosted';
+  if (['passed', 'not a fit', 'not interested', 'declined'].some(x => s.includes(x))) return 'declined';
   if (['archived', 'too big', 'no fit'].some(x => s.includes(x))) return 'archived';
   return '';
 }
