@@ -116,9 +116,9 @@ function appToDb(inv) {
     thesis: inv.thesis || '',
     notes: inv.notes || '',
     timeline: JSON.stringify(inv.timeline || []),
-    last_contact: inv.lastContact || null,
-    next_meeting: inv.nextMeeting || null,
-    profiled_at: inv.profiledAt || null,
+    last_contact: inv.lastContact && inv.lastContact.length >= 10 ? inv.lastContact : null,
+    next_meeting: inv.nextMeeting && inv.nextMeeting.length >= 10 ? inv.nextMeeting : null,
+    profiled_at: inv.profiledAt && inv.profiledAt.length > 0 ? inv.profiledAt : null,
     created_at: inv.created || new Date().toISOString()
   };
 }
