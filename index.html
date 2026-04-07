@@ -1919,7 +1919,7 @@ function renderCards() {
         ${inv.owner ? `<span class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${esc(inv.owner)}</span>` : ''}
         <span class="card-nda-badge nda-${inv.nda || 'none'}">${inv.nda === 'signed' ? '✓ NDA' : inv.nda === 'pending' ? '⏳ NDA' : ''}</span>
         ${inv.email ? `<span class="card-meta-item" style="color:var(--green);font-size:11px;">✉ ${esc(inv.email)}</span>` : ''}
-        ${inv.nextMeeting ? `<span class="card-meta-item" style="color:var(--gold-dark);font-size:11px;">📅 ${new Date(inv.nextMeeting).toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' })}</span>` : ''}
+        ${inv.nextMeeting ? `<span class="card-meta-item" style="color:var(--gold-dark);font-size:11px;">📅 ${new Date(inv.nextMeeting + 'T00:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric' })}</span>` : ''}
         ${inv.lastContact ? `<span class="card-meta-item" style="font-size:11px;">Last: ${new Date(inv.lastContact).toLocaleDateString('en-US', { month:'short', day:'numeric' })}</span>` : ''}
       </div>
       ${hasLinks ? `<div class="card-links" onclick="event.stopPropagation()">
@@ -2479,7 +2479,7 @@ function buildForm(inv) {
       </div>
       <div class="form-group">
         <label class="form-label">Next Meeting</label>
-        <input class="form-input" id="fNextMeeting" type="datetime-local" value="${inv.nextMeeting || ''}">
+        <input class="form-input" id="fNextMeeting" type="date" value="${inv.nextMeeting ? inv.nextMeeting.substring(0,10) : ''}">
       </div>
     </div>
     <div class="form-group">
@@ -2608,17 +2608,37 @@ function addQuickNote() {
   const text = input.value.trim();
   if (!text || !editingId) return;
 
+  // Save current form values to the investor object before rebuilding
+  const inv = investors.find(i => i.id === editingId);
+  if (!inv) return;
+
+  // Capture all unsaved form state
+  const fFirm = document.getElementById('fFirm');
+  if (fFirm) {
+    inv.firm = fFirm.value.trim() || inv.firm;
+    inv.contact = document.getElementById('fContact')?.value.trim() || inv.contact;
+    inv.email = document.getElementById('fEmail')?.value.trim() || inv.email;
+    inv.website = document.getElementById('fWebsite')?.value.trim() || inv.website;
+    inv.linkedin = document.getElementById('fLinkedin')?.value.trim() || inv.linkedin;
+    inv.status = document.getElementById('fStatus')?.value || inv.status;
+    inv.nda = document.getElementById('fNda')?.value || inv.nda;
+    inv.checkSize = document.getElementById('fCheckSize')?.value.trim() || inv.checkSize;
+    inv.owner = document.getElementById('fOwner')?.value ?? inv.owner;
+    inv.stage = document.getElementById('fStage')?.value.trim() || inv.stage;
+    inv.lastContact = document.getElementById('fLastContact')?.value || inv.lastContact;
+    inv.nextMeeting = document.getElementById('fNextMeeting')?.value || inv.nextMeeting;
+    inv.thesis = document.getElementById('fThesis')?.value.trim() || inv.thesis;
+    inv.notes = document.getElementById('fNotes')?.value.trim() || inv.notes;
+  }
+
   addTimelineEntry(editingId, text);
   saveData(investors);
   input.value = '';
   toast('Note added');
 
-  // Re-render panel timeline
-  const inv = investors.find(i => i.id === editingId);
-  if (inv) {
-    document.getElementById('panelTitle').textContent = inv.firm;
-    document.getElementById('panelBody').innerHTML = buildForm(inv) + buildTimeline(inv);
-  }
+  // Re-render panel with preserved form state
+  document.getElementById('panelTitle').textContent = inv.firm;
+  document.getElementById('panelBody').innerHTML = buildForm(inv) + buildTimeline(inv);
 }
 
 
