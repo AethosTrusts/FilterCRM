@@ -1643,8 +1643,14 @@ async function saveAllInvestors() {
     });
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}));
-      console.error('Bulk save failed:', err);
-      toast('⚠️ Database save failed — changes saved locally only', 'error');
+      console.error('Bulk save failed:', resp.status, err);
+      toast('⚠️ DB save failed (' + resp.status + '): ' + (err.detail || err.error || 'unknown'), 'error');
+    } else {
+      const result = await resp.json().catch(() => ({}));
+      if (result.errors && result.errors.length > 0) {
+        console.warn('Partial save:', result);
+        toast('⚠️ Saved ' + result.saved + '/' + result.total + ' — some rows had errors', 'error');
+      }
     }
   } catch (e) {
     console.error('Bulk save error:', e);
