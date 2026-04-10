@@ -1,139 +1,179 @@
-// Supabase database proxy — all investor CRUD goes through here
-// Environment variables needed: SUPABASE_URL, SUPABASE_KEY
+// Supabase database proxy — all investor CRUD
+// Environment variables: SUPABASE_URL, SUPABASE_KEY
+
+var knownColumns = null; // cached after first discovery
 
 exports.handler = async function(event, context) {
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_KEY = process.env.SUPABASE_KEY;
+  var SUPABASE_URL = process.env.SUPABASE_URL;
+  var SUPABASE_KEY = process.env.SUPABASE_KEY;
 
   if (!SUPABASE_URL || !SUPABASE_KEY) {
     return { statusCode: 500, body: JSON.stringify({ error: "SUPABASE_URL or SUPABASE_KEY not set" }) };
   }
 
-  const headers = {
+  var hdrs = {
     "apikey": SUPABASE_KEY,
     "Authorization": "Bearer " + SUPABASE_KEY,
-    "Content-Type": "application/json",
-    "Prefer": "return=representation"
+    "Content-Type": "application/json"
   };
 
-  const baseUrl = SUPABASE_URL + "/rest/v1/investors";
-
-  // Route based on HTTP method + query params
-  const params = event.queryStringParameters || {};
-  const action = params.action || '';
+  var base = SUPABASE_URL + "/rest/v1/investors";
+  var params = event.queryStringParameters || {};
+  var action = params.action || '';
 
   try {
-    // GET /api/db — load all investors
-    if (event.httpMethod === "GET" && !action) {
-      const resp = await fetch(baseUrl + "?order=firm.asc&limit=1000", { headers });
-      if (!resp.ok) {
-        const err = await resp.text();
-        return { statusCode: resp.status, body: JSON.stringify({ error: "DB read failed", detail: err }) };
-      }
-      const rows = await resp.json();
-      // Convert DB rows to app format (timeline is stored as JSONB)
-      const investors = rows.map(dbToApp);
-      return { statusCode: 200, headers: cors(), body: JSON.stringify(investors) };
+    // Discover table columns on first write operation
+    if (!knownColumns && (event.httpMethod === "POST" || event.httpMethod === "DELETE")) {
+      knownColumns = await discoverColumns(base, hdrs);
     }
 
-    // POST /api/db?action=upsert — create or update one investor
-    if (event.httpMethod === "POST" && action === "upsert") {
-      const inv = JSON.parse(event.body);
-      const row = appToDb(inv);
+    // GET — load all
+    if (event.httpMethod === "GET" && !action) {
+      var resp = await fetch(base + "?order=firm.asc&limit=1000", { headers: hdrs });
+      if (!resp.ok) {
+        return { statusCode: resp.status, body: JSON.stringify({ error: "DB read failed", detail: await resp.text() }) };
+      }
+      var rows = await resp.json();
+      return { statusCode: 200, headers: cors(), body: JSON.stringify(rows.map(dbToApp)) };
+    }
 
-      const resp = await fetch(baseUrl + "?on_conflict=id", {
+    // POST upsert — single
+    if (event.httpMethod === "POST" && action === "upsert") {
+      var inv = JSON.parse(event.body);
+      var row = safeRow(appToDb(inv));
+      var resp = await fetch(base + "?on_conflict=id", {
         method: "POST",
-        headers: { ...headers, "Prefer": "return=representation,resolution=merge-duplicates" },
+        headers: Object.assign({}, hdrs, { "Prefer": "return=representation,resolution=merge-duplicates" }),
         body: JSON.stringify(row)
       });
-
       if (!resp.ok) {
-        const err = await resp.text();
-        return { statusCode: resp.status, body: JSON.stringify({ error: "Upsert failed", detail: err }) };
+        return { statusCode: resp.status, body: JSON.stringify({ error: "Upsert failed", detail: await resp.text() }) };
       }
-      const result = await resp.json();
+      var result = await resp.json();
       return { statusCode: 200, headers: cors(), body: JSON.stringify(result[0] ? dbToApp(result[0]) : {}) };
     }
 
-    // POST /api/db?action=bulk — upsert many investors at once
+    // POST bulk — chunked
     if (event.httpMethod === "POST" && action === "bulk") {
-      const invs = JSON.parse(event.body);
-      const rows = invs.map(appToDb);
+      var invs = JSON.parse(event.body);
+      var allRows = invs.map(function(inv) { return safeRow(appToDb(inv)); });
+      var saved = 0;
+      var errors = [];
 
-      // Supabase supports bulk upsert
-      const resp = await fetch(baseUrl + "?on_conflict=id", {
-        method: "POST",
-        headers: { ...headers, "Prefer": "return=representation,resolution=merge-duplicates" },
-        body: JSON.stringify(rows)
-      });
-
-      if (!resp.ok) {
-        const err = await resp.text();
-        return { statusCode: resp.status, body: JSON.stringify({ error: "Bulk upsert failed", detail: err }) };
+      for (var i = 0; i < allRows.length; i += 50) {
+        var chunk = allRows.slice(i, i + 50);
+        var resp = await fetch(base + "?on_conflict=id", {
+          method: "POST",
+          headers: Object.assign({}, hdrs, { "Prefer": "return=minimal,resolution=merge-duplicates" }),
+          body: JSON.stringify(chunk)
+        });
+        if (resp.ok) {
+          saved += chunk.length;
+        } else {
+          var batchErr = await resp.text();
+          errors.push({ batch: Math.floor(i/50), status: resp.status, detail: batchErr });
+          // Fallback: individual saves
+          for (var j = 0; j < chunk.length; j++) {
+            var s = await fetch(base + "?on_conflict=id", {
+              method: "POST",
+              headers: Object.assign({}, hdrs, { "Prefer": "return=minimal,resolution=merge-duplicates" }),
+              body: JSON.stringify(chunk[j])
+            });
+            if (s.ok) saved++;
+            else errors.push({ id: chunk[j].id, firm: chunk[j].firm, detail: await s.text() });
+          }
+        }
       }
-      const result = await resp.json();
-      return { statusCode: 200, headers: cors(), body: JSON.stringify({ saved: result.length }) };
+
+      return { statusCode: errors.length > 0 ? 207 : 200, headers: cors(), body: JSON.stringify({ saved: saved, total: allRows.length, errors: errors }) };
     }
 
-    // DELETE /api/db?id=xxx — delete one investor
+    // DELETE
     if (event.httpMethod === "DELETE") {
-      const id = params.id;
+      var id = params.id;
       if (!id) return { statusCode: 400, body: JSON.stringify({ error: "id required" }) };
-
-      const resp = await fetch(baseUrl + "?id=eq." + encodeURIComponent(id), {
-        method: "DELETE",
-        headers
-      });
-
+      var resp = await fetch(base + "?id=eq." + encodeURIComponent(id), { method: "DELETE", headers: hdrs });
       if (!resp.ok) {
-        const err = await resp.text();
-        return { statusCode: resp.status, body: JSON.stringify({ error: "Delete failed", detail: err }) };
+        return { statusCode: resp.status, body: JSON.stringify({ error: "Delete failed", detail: await resp.text() }) };
       }
       return { statusCode: 200, headers: cors(), body: JSON.stringify({ deleted: id }) };
     }
 
     return { statusCode: 400, body: JSON.stringify({ error: "Unknown action" }) };
-
   } catch (e) {
     return { statusCode: 500, body: JSON.stringify({ error: e.message }) };
   }
 };
 
-// Convert app investor object → Supabase row (snake_case, flatten timeline to JSONB)
+// Discover which columns exist by reading one row or the table definition
+async function discoverColumns(base, hdrs) {
+  try {
+    // Fetch one row to see which columns come back
+    var resp = await fetch(base + "?limit=1", { headers: hdrs });
+    if (resp.ok) {
+      var rows = await resp.json();
+      if (rows.length > 0) {
+        return Object.keys(rows[0]);
+      }
+    }
+  } catch(e) {}
+  // Fallback: assume the core columns from the original CREATE TABLE
+  return ["id","firm","contact","email","website","linkedin","status","nda","check_size","owner","stage","thesis","notes","timeline","created_at"];
+}
+
+// Strip any keys from row that aren't in the known columns
+function safeRow(row) {
+  if (!knownColumns) return row;
+  var safe = {};
+  for (var key in row) {
+    if (knownColumns.indexOf(key) !== -1) {
+      safe[key] = row[key];
+    }
+  }
+  return safe;
+}
+
+// Build the full row object — safeRow will strip unknown columns before sending
 function appToDb(inv) {
+  var tl = inv.timeline || [];
+  if (typeof tl === 'string') { try { tl = JSON.parse(tl); } catch(e) { tl = []; } }
+  if (!Array.isArray(tl)) tl = [];
+
   var row = {
-    id: inv.id,
-    firm: inv.firm || '',
-    contact: inv.contact || '',
-    email: inv.email || '',
-    website: inv.website || '',
-    linkedin: inv.linkedin || '',
-    status: inv.status || 'new',
-    nda: inv.nda || 'none',
-    check_size: inv.checkSize || '',
-    owner: inv.owner || '',
-    stage: inv.stage || '',
-    thesis: inv.thesis || '',
-    notes: inv.notes || '',
-    timeline: JSON.stringify(inv.timeline || []),
-    created_at: inv.created || new Date().toISOString()
+    id: String(inv.id || 'inv_' + Date.now() + '_' + Math.random().toString(36).substr(2,5)),
+    firm: String(inv.firm || ''),
+    contact: String(inv.contact || ''),
+    email: String(inv.email || ''),
+    website: String(inv.website || ''),
+    linkedin: String(inv.linkedin || ''),
+    status: String(inv.status || 'new'),
+    nda: String(inv.nda || 'none'),
+    check_size: String(inv.checkSize || ''),
+    owner: String(inv.owner || ''),
+    stage: String(inv.stage || ''),
+    thesis: String(inv.thesis || ''),
+    notes: String(inv.notes || ''),
+    timeline: tl,
+    created_at: validTs(inv.created) || new Date().toISOString()
   };
 
-  // Only include date fields if they have valid values — omit entirely if empty
-  // This prevents 400 errors if columns don't exist yet or values are invalid
-  if (inv.lastContact && inv.lastContact.length >= 10) row.last_contact = inv.lastContact;
-  if (inv.nextMeeting && inv.nextMeeting.length >= 10) row.next_meeting = inv.nextMeeting;
-  if (inv.profiledAt && inv.profiledAt.length > 4) row.profiled_at = inv.profiledAt;
+  // Optional date columns — only add if value is valid
+  var lc = String(inv.lastContact || '');
+  if (lc.length >= 10 && !isNaN(Date.parse(lc.substring(0,10)))) row.last_contact = lc.substring(0,10);
+
+  var nm = String(inv.nextMeeting || '');
+  if (nm.length >= 10 && !isNaN(Date.parse(nm.substring(0,10)))) row.next_meeting = nm.substring(0,10);
+
+  var pa = String(inv.profiledAt || '');
+  if (pa.length > 4 && !isNaN(Date.parse(pa))) row.profiled_at = pa;
 
   return row;
 }
 
-// Convert Supabase row → app investor object (camelCase)
 function dbToApp(row) {
-  var timeline = [];
-  try {
-    timeline = typeof row.timeline === 'string' ? JSON.parse(row.timeline) : (row.timeline || []);
-  } catch(e) { timeline = []; }
+  var tl = row.timeline || [];
+  if (typeof tl === 'string') { try { tl = JSON.parse(tl); } catch(e) { tl = []; } }
+  if (!Array.isArray(tl)) tl = [];
 
   return {
     id: row.id,
@@ -149,12 +189,19 @@ function dbToApp(row) {
     stage: row.stage || '',
     thesis: row.thesis || '',
     notes: row.notes || '',
-    timeline: timeline,
+    timeline: tl,
     lastContact: row.last_contact || '',
     nextMeeting: row.next_meeting || '',
     profiledAt: row.profiled_at || '',
     created: row.created_at || ''
   };
+}
+
+function validTs(val) {
+  if (!val) return null;
+  var s = String(val);
+  if (s.length < 4 || isNaN(Date.parse(s))) return null;
+  return s;
 }
 
 function cors() {
