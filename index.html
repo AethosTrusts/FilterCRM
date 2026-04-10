@@ -277,6 +277,30 @@ body {
   font-weight: 600;
   background: var(--gold-light);
 }
+.filter-dropdown-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.filter-dropdown-toggle:hover { background: var(--cream); }
+.filter-dropdown-toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--gold-dark);
+  cursor: pointer;
+}
+
+/* Card density — hide sections via parent class */
+.cards-container.hide-thesis .card-thesis { display: none; }
+.cards-container.hide-notes .card-note { display: none; }
+.cards-container.hide-links .card-links { display: none; }
+.cards-container.hide-email .card-meta-item[data-field="email"] { display: none; }
+.cards-container.hide-activity .card-activity { display: none; }
 
 /* ─── IMPORT PREVIEW ─── */
 .import-summary {
@@ -532,26 +556,24 @@ body {
 
 /* ─── INVESTOR CARDS ─── */
 .cards-container {
-  padding: 12px 16px;
+  padding: 12px 10px;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 10px;
+  gap: 8px;
   padding-bottom: 100px;
 }
-
-@media (min-width: 640px) {
-  .cards-container {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    padding: 16px 20px 100px;
-  }
-}
-@media (min-width: 1100px) {
-  .cards-container {
-    grid-template-columns: repeat(3, 1fr);
-    max-width: 1200px;
-    margin: 0 auto;
-  }
+/* Column overrides — set by JS */
+.cards-container.cols-1 { grid-template-columns: 1fr; max-width: 600px; margin: 0 auto; }
+.cards-container.cols-2 { grid-template-columns: repeat(2, 1fr); }
+.cards-container.cols-3 { grid-template-columns: repeat(3, 1fr); }
+.cards-container.cols-4 { grid-template-columns: repeat(4, 1fr); }
+/* Mobile override — always 1 col under 600px regardless of setting */
+@media (max-width: 600px) {
+  .cards-container { grid-template-columns: 1fr !important; padding: 8px; gap: 6px; }
+  .investor-card { padding: 12px; }
+  .card-firm { font-size: 15px; }
+  .card-thesis { font-size: 12px; -webkit-line-clamp: 2; }
+  .card-note { font-size: 12px; -webkit-line-clamp: 1; }
 }
 .investor-card {
   background: var(--card-bg);
@@ -1514,6 +1536,24 @@ body {
       Board
     </button>
   </div>
+  <div class="filter-dropdown-wrap">
+    <button class="filter-pill" id="layoutBtn" onclick="toggleDropdown('layoutDropdown')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:-2px;margin-right:3px;"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Layout
+    </button>
+    <div class="filter-dropdown" id="layoutDropdown" style="min-width:200px;">
+      <div style="padding:8px 18px 4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-secondary);">Columns</div>
+      <button class="filter-dropdown-item" onclick="setColumns(1, this)">1 Column</button>
+      <button class="filter-dropdown-item active" onclick="setColumns(2, this)">2 Columns</button>
+      <button class="filter-dropdown-item" onclick="setColumns(3, this)">3 Columns</button>
+      <button class="filter-dropdown-item" onclick="setColumns(4, this)">4 Columns</button>
+      <div style="padding:8px 18px 4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-secondary);border-top:1px solid var(--border);margin-top:4px;">Show on Cards</div>
+      <label class="filter-dropdown-toggle" onclick="event.stopPropagation()"><input type="checkbox" id="togThesis" onchange="updateCardDensity()" checked> Thesis</label>
+      <label class="filter-dropdown-toggle" onclick="event.stopPropagation()"><input type="checkbox" id="togNotes" onchange="updateCardDensity()" checked> Notes</label>
+      <label class="filter-dropdown-toggle" onclick="event.stopPropagation()"><input type="checkbox" id="togLinks" onchange="updateCardDensity()" checked> Links</label>
+      <label class="filter-dropdown-toggle" onclick="event.stopPropagation()"><input type="checkbox" id="togEmail" onchange="updateCardDensity()" checked> Email</label>
+      <label class="filter-dropdown-toggle" onclick="event.stopPropagation()"><input type="checkbox" id="togActivity" onchange="updateCardDensity()" checked> Activity</label>
+    </div>
+  </div>
 </div>
 
 <!-- INVESTOR CARDS -->
@@ -1926,7 +1966,7 @@ function renderCards() {
         ${inv.checkSize ? `<span class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>${esc(inv.checkSize)}</span>` : ''}
         ${inv.owner ? `<span class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${esc(inv.owner)}</span>` : ''}
         <span class="card-nda-badge nda-${inv.nda || 'none'}">${inv.nda === 'signed' ? '✓ NDA' : inv.nda === 'pending' ? '⏳ NDA' : ''}</span>
-        ${inv.email ? `<span class="card-meta-item" style="color:var(--green);font-size:11px;">✉ ${esc(inv.email)}</span>` : ''}
+        ${inv.email ? `<span class="card-meta-item" data-field="email" style="color:var(--green);font-size:11px;">✉ ${esc(inv.email)}</span>` : ''}
         ${inv.nextMeeting ? `<span class="card-meta-item" style="color:var(--gold-dark);font-size:11px;">📅 ${new Date(inv.nextMeeting + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric' })}</span>` : ''}
         ${inv.lastContact ? `<span class="card-meta-item" style="font-size:11px;">Last: ${new Date(inv.lastContact + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric' })}</span>` : ''}
       </div>
@@ -1973,10 +2013,36 @@ function setView(view) {
   document.getElementById('viewBoard').classList.toggle('active', view === 'board');
   document.getElementById('cardsContainer').style.display = view === 'cards' ? '' : 'none';
   document.getElementById('boardContainer').classList.toggle('visible', view === 'board');
-  // Hide filter bar extras in board view (sorting is irrelevant — board sorts by stage)
   if (view === 'board') renderBoard();
   else renderCards();
 }
+
+let currentCols = 2;
+
+function setColumns(n, btn) {
+  currentCols = n;
+  const container = document.getElementById('cardsContainer');
+  container.classList.remove('cols-1', 'cols-2', 'cols-3', 'cols-4');
+  container.classList.add('cols-' + n);
+  // Update active state in dropdown
+  const dd = document.getElementById('layoutDropdown');
+  dd.querySelectorAll('.filter-dropdown-item').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function updateCardDensity() {
+  const container = document.getElementById('cardsContainer');
+  container.classList.toggle('hide-thesis', !document.getElementById('togThesis').checked);
+  container.classList.toggle('hide-notes', !document.getElementById('togNotes').checked);
+  container.classList.toggle('hide-links', !document.getElementById('togLinks').checked);
+  container.classList.toggle('hide-email', !document.getElementById('togEmail').checked);
+  container.classList.toggle('hide-activity', !document.getElementById('togActivity').checked);
+}
+
+// Apply default column class on load
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('cardsContainer').classList.add('cols-2');
+});
 
 const BOARD_STAGES = [
   { key: 'new', label: 'New', color: 'var(--blue)' },
