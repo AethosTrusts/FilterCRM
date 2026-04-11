@@ -425,6 +425,8 @@ body {
   flex-direction: column;
 }
 .board-col:last-child { border-right: none; }
+.board-col[draggable="true"] { transition: opacity 0.2s, border-left 0.15s; }
+.board-col-header svg { flex-shrink: 0; }
 .board-col-header {
   padding: 10px 14px;
   background: var(--card-bg);
@@ -556,20 +558,15 @@ body {
 
 /* ─── INVESTOR CARDS ─── */
 .cards-container {
-  padding: 12px 10px;
+  padding: 12px 16px;
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
+  grid-template-columns: repeat(var(--card-cols, 2), 1fr);
+  gap: 10px;
   padding-bottom: 100px;
 }
-/* Column overrides — set by JS */
-.cards-container.cols-1 { grid-template-columns: 1fr; max-width: 600px; margin: 0 auto; }
-.cards-container.cols-2 { grid-template-columns: repeat(2, 1fr); }
-.cards-container.cols-3 { grid-template-columns: repeat(3, 1fr); }
-.cards-container.cols-4 { grid-template-columns: repeat(4, 1fr); }
-/* Mobile override — always 1 col under 600px regardless of setting */
+/* Mobile override — always 1 col under 600px */
 @media (max-width: 600px) {
-  .cards-container { grid-template-columns: 1fr !important; padding: 8px; gap: 6px; }
+  .cards-container { --card-cols: 1 !important; padding: 8px; gap: 6px; }
   .investor-card { padding: 12px; }
   .card-firm { font-size: 15px; }
   .card-thesis { font-size: 12px; -webkit-line-clamp: 2; }
@@ -1557,7 +1554,7 @@ body {
 </div>
 
 <!-- INVESTOR CARDS -->
-<div class="cards-container" id="cardsContainer"></div>
+<div class="cards-container" id="cardsContainer" style="--card-cols:2;"></div>
 
 <!-- BOARD VIEW -->
 <div class="board-container" id="boardContainer"></div>
@@ -1681,16 +1678,13 @@ async function saveAllInvestors() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(investors)
     });
+    const result = await resp.json().catch(() => ({}));
     if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      console.error('Bulk save failed:', resp.status, err);
-      toast('⚠️ DB save failed (' + resp.status + '): ' + (err.detail || err.error || 'unknown'), 'error');
-    } else {
-      const result = await resp.json().catch(() => ({}));
-      if (result.errors && result.errors.length > 0) {
-        console.warn('Partial save:', result);
-        toast('⚠️ Saved ' + result.saved + '/' + result.total + ' — some rows had errors', 'error');
-      }
+      console.error('Bulk save failed:', resp.status, result);
+      toast('⚠️ DB save failed (' + resp.status + ')', 'error');
+    } else if (result.failed && result.failed.length > 0) {
+      console.warn('Failed rows:', result.failed);
+      toast('⚠️ ' + result.failed.length + ' rows failed to save — ' + result.saved + ' saved', 'error');
     }
   } catch (e) {
     console.error('Bulk save error:', e);
@@ -2021,10 +2015,7 @@ let currentCols = 2;
 
 function setColumns(n, btn) {
   currentCols = n;
-  const container = document.getElementById('cardsContainer');
-  container.classList.remove('cols-1', 'cols-2', 'cols-3', 'cols-4');
-  container.classList.add('cols-' + n);
-  // Update active state in dropdown
+  document.getElementById('cardsContainer').style.setProperty('--card-cols', n);
   const dd = document.getElementById('layoutDropdown');
   dd.querySelectorAll('.filter-dropdown-item').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
@@ -2039,12 +2030,7 @@ function updateCardDensity() {
   container.classList.toggle('hide-activity', !document.getElementById('togActivity').checked);
 }
 
-// Apply default column class on load
-document.addEventListener('DOMContentLoaded', function() {
-  document.getElementById('cardsContainer').classList.add('cols-2');
-});
-
-const BOARD_STAGES = [
+let BOARD_STAGES = [
   { key: 'new', label: 'New', color: 'var(--blue)' },
   { key: 'contacted', label: 'Contacted', color: 'var(--orange)' },
   { key: 'meeting', label: 'Meeting', color: 'var(--gold-dark)' },
@@ -2057,11 +2043,21 @@ const BOARD_STAGES = [
   { key: 'archived', label: 'Archived', color: 'var(--text-secondary)' },
 ];
 
+// Restore saved column order
+try {
+  const savedOrder = JSON.parse(localStorage.getItem('fb_board_order'));
+  if (savedOrder && savedOrder.length === BOARD_STAGES.length) {
+    const reordered = savedOrder.map(key => BOARD_STAGES.find(s => s.key === key)).filter(Boolean);
+    if (reordered.length === BOARD_STAGES.length) BOARD_STAGES = reordered;
+  }
+} catch(e) {}
+
+let dragColIdx = null;
+
 function renderBoard() {
   const container = document.getElementById('boardContainer');
   const search = document.getElementById('searchInput').value.toLowerCase();
 
-  // Apply owner filter
   let pool = investors;
   if (ownerFilter !== 'all') {
     if (ownerFilter === 'unassigned') pool = pool.filter(inv => !inv.owner || inv.owner.trim() === '');
@@ -2076,7 +2072,7 @@ function renderBoard() {
     );
   }
 
-  const cols = BOARD_STAGES.map(stage => {
+  const cols = BOARD_STAGES.map((stage, colIdx) => {
     const items = pool.filter(inv => inv.status === stage.key).sort((a, b) => a.firm.localeCompare(b.firm));
     const cells = items.length > 0
       ? items.map(inv => `
@@ -2095,18 +2091,67 @@ function renderBoard() {
       : '<div class="board-empty">No investors</div>';
 
     return `
-      <div class="board-col">
-        <div class="board-col-header">
-          ${stage.label}
+      <div class="board-col" draggable="true" data-col-idx="${colIdx}"
+        ondragstart="boardDragStart(event, ${colIdx})"
+        ondragover="boardDragOver(event)"
+        ondrop="boardDrop(event, ${colIdx})"
+        ondragend="boardDragEnd(event)">
+        <div class="board-col-header" style="cursor:grab;">
+          <span style="display:flex;align-items:center;gap:6px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;opacity:0.4;"><path d="M8 6h.01M8 12h.01M8 18h.01M16 6h.01M16 12h.01M16 18h.01"/></svg>
+            ${stage.label}
+          </span>
           <span class="board-col-count">${items.length}</span>
         </div>
         <div class="board-col-body">${cells}</div>
       </div>
     `;
   }).join('');
+  }).join('');
 
   container.innerHTML = `<div class="board-grid">${cols}</div>`;
   updateCounts();
+}
+
+// Board column drag-and-drop reordering
+function boardDragStart(e, idx) {
+  dragColIdx = idx;
+  e.dataTransfer.effectAllowed = 'move';
+  e.target.style.opacity = '0.5';
+}
+
+function boardDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  // Visual feedback
+  const col = e.target.closest('.board-col');
+  if (col) {
+    document.querySelectorAll('.board-col').forEach(c => c.style.borderLeft = '');
+    col.style.borderLeft = '3px solid var(--gold)';
+  }
+}
+
+function boardDrop(e, targetIdx) {
+  e.preventDefault();
+  document.querySelectorAll('.board-col').forEach(c => { c.style.borderLeft = ''; c.style.opacity = ''; });
+  if (dragColIdx === null || dragColIdx === targetIdx) return;
+
+  // Reorder BOARD_STAGES
+  const moved = BOARD_STAGES.splice(dragColIdx, 1)[0];
+  BOARD_STAGES.splice(targetIdx, 0, moved);
+
+  // Save order to localStorage
+  localStorage.setItem('fb_board_order', JSON.stringify(BOARD_STAGES.map(s => s.key)));
+
+  dragColIdx = null;
+  renderBoard();
+  toast('Board columns reordered');
+}
+
+function boardDragEnd(e) {
+  e.target.style.opacity = '';
+  document.querySelectorAll('.board-col').forEach(c => c.style.borderLeft = '');
+  dragColIdx = null;
 }
 
 function statusLabel(s) {
