@@ -1,0 +1,9 @@
+{
+  "name": "filtercrm",
+  "version": "1.0.0",
+  "description": "Filterbaby investor pipeline CRM",
+  "private": true,
+  "dependencies": {
+    "@netlify/neon": "^0.1.6"
+  }
+}

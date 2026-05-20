@@ -277,30 +277,6 @@ body {
   font-weight: 600;
   background: var(--gold-light);
 }
-.filter-dropdown-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 18px;
-  font-size: 13px;
-  color: var(--text);
-  cursor: pointer;
-  transition: var(--transition);
-}
-.filter-dropdown-toggle:hover { background: var(--cream); }
-.filter-dropdown-toggle input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--gold-dark);
-  cursor: pointer;
-}
-
-/* Card density — hide sections via parent class */
-.cards-container.hide-thesis .card-thesis { display: none; }
-.cards-container.hide-notes .card-note { display: none; }
-.cards-container.hide-links .card-links { display: none; }
-.cards-container.hide-email .card-meta-item[data-field="email"] { display: none; }
-.cards-container.hide-activity .card-activity { display: none; }
 
 /* ─── IMPORT PREVIEW ─── */
 .import-summary {
@@ -425,8 +401,6 @@ body {
   flex-direction: column;
 }
 .board-col:last-child { border-right: none; }
-.board-col[draggable="true"] { transition: opacity 0.2s, border-left 0.15s; }
-.board-col-header svg { flex-shrink: 0; }
 .board-col-header {
   padding: 10px 14px;
   background: var(--card-bg);
@@ -505,8 +479,6 @@ body {
 .board-cell-tag.check { background: var(--green-light); color: var(--green); }
 .board-cell-tag.email { background: var(--green-light); color: var(--green); }
 .board-cell-tag.nda { background: var(--orange-light); color: var(--orange); }
-.board-cell-tag.date { background: none; color: var(--text-secondary); margin-left: auto; font-size: 9px; font-weight: 400; }
-.board-cell-tag.meeting-date { background: var(--gold-light); color: var(--gold-dark); margin-left: auto; }
 .board-empty {
   padding: 16px 10px;
   text-align: center;
@@ -559,18 +531,10 @@ body {
 /* ─── INVESTOR CARDS ─── */
 .cards-container {
   padding: 12px 16px;
-  display: grid;
-  grid-template-columns: repeat(var(--card-cols, 2), 1fr);
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   padding-bottom: 100px;
-}
-/* Mobile override — always 1 col under 600px */
-@media (max-width: 600px) {
-  .cards-container { --card-cols: 1 !important; padding: 8px; gap: 6px; }
-  .investor-card { padding: 12px; }
-  .card-firm { font-size: 15px; }
-  .card-thesis { font-size: 12px; -webkit-line-clamp: 2; }
-  .card-note { font-size: 12px; -webkit-line-clamp: 1; }
 }
 .investor-card {
   background: var(--card-bg);
@@ -623,7 +587,6 @@ body {
 .status-closed { background: var(--green-light); color: var(--green); }
 .status-archived { background: #EEEDEA; color: #999; }
 .status-declined { background: var(--red-light); color: var(--red); }
-.status-ghosted { background: #F5EAF0; color: #8C4A6A; }
 
 .card-meta {
   display: flex;
@@ -696,17 +659,6 @@ body {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-.card-activity {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px dashed var(--border);
-  font-size: 11px;
-  color: var(--text-secondary);
-  line-height: 1.4;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* ─── THESIS BLOCK (panel) ─── */
@@ -1378,6 +1330,20 @@ body {
   .form-row { grid-template-columns: 1fr; }
   .header-btn span { display: none; }
 }
+@media (min-width: 768px) {
+  .cards-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+@media (min-width: 1200px) {
+  .cards-container {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+}
 </style>
 </head>
 <body>
@@ -1478,7 +1444,6 @@ body {
   <button class="tab-btn" data-tab="due-diligence" onclick="setTab('due-diligence', this)">Due Diligence<span class="tab-count" id="countDd">0</span></button>
   <button class="tab-btn" data-tab="nda-sent" onclick="setTab('nda-sent', this)">NDA<span class="tab-count" id="countNda">0</span></button>
   <button class="tab-btn" data-tab="term-sheet" onclick="setTab('term-sheet', this)">Term Sheet<span class="tab-count" id="countTs">0</span></button>
-  <button class="tab-btn" data-tab="ghosted" onclick="setTab('ghosted', this)">Ghosted<span class="tab-count" id="countGhosted">0</span></button>
   <button class="tab-btn" data-tab="archived" onclick="setTab('archived', this)">Archived<span class="tab-count" id="countArchived">0</span></button>
 </div>
 
@@ -1533,28 +1498,10 @@ body {
       Board
     </button>
   </div>
-  <div class="filter-dropdown-wrap">
-    <button class="filter-pill" id="layoutBtn" onclick="toggleDropdown('layoutDropdown')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:-2px;margin-right:3px;"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Layout
-    </button>
-    <div class="filter-dropdown" id="layoutDropdown" style="min-width:200px;">
-      <div style="padding:8px 18px 4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-secondary);">Columns</div>
-      <button class="filter-dropdown-item" onclick="setColumns(1, this)">1 Column</button>
-      <button class="filter-dropdown-item active" onclick="setColumns(2, this)">2 Columns</button>
-      <button class="filter-dropdown-item" onclick="setColumns(3, this)">3 Columns</button>
-      <button class="filter-dropdown-item" onclick="setColumns(4, this)">4 Columns</button>
-      <div style="padding:8px 18px 4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-secondary);border-top:1px solid var(--border);margin-top:4px;">Show on Cards</div>
-      <label class="filter-dropdown-toggle" onclick="event.stopPropagation()"><input type="checkbox" id="togThesis" onchange="updateCardDensity()" checked> Thesis</label>
-      <label class="filter-dropdown-toggle" onclick="event.stopPropagation()"><input type="checkbox" id="togNotes" onchange="updateCardDensity()" checked> Notes</label>
-      <label class="filter-dropdown-toggle" onclick="event.stopPropagation()"><input type="checkbox" id="togLinks" onchange="updateCardDensity()" checked> Links</label>
-      <label class="filter-dropdown-toggle" onclick="event.stopPropagation()"><input type="checkbox" id="togEmail" onchange="updateCardDensity()" checked> Email</label>
-      <label class="filter-dropdown-toggle" onclick="event.stopPropagation()"><input type="checkbox" id="togActivity" onchange="updateCardDensity()" checked> Activity</label>
-    </div>
-  </div>
 </div>
 
 <!-- INVESTOR CARDS -->
-<div class="cards-container" id="cardsContainer" style="--card-cols:2;"></div>
+<div class="cards-container" id="cardsContainer"></div>
 
 <!-- BOARD VIEW -->
 <div class="board-container" id="boardContainer"></div>
@@ -1636,11 +1583,10 @@ const DEFAULT_SETTINGS = {
 
 // Server integration status + auth
 let serverStatus = { anthropic: false, slack: false, pandadoc: false, auth: false };
-let currentUser = null; // { email, name, picture }
-
-// ── Supabase-backed data layer ──
+let currentUser = null;
 let dbReady = false;
 
+// ── Netlify DB (Neon Postgres) data layer ──
 async function loadDataFromServer() {
   try {
     const resp = await fetch('/api/db');
@@ -1650,25 +1596,6 @@ async function loadDataFromServer() {
     console.error('Failed to load from server, falling back to localStorage:', e);
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; }
   }
-}
-
-async function saveInvestor(inv) {
-  try {
-    const resp = await fetch('/api/db?action=upsert', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(inv)
-    });
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      console.error('Save failed:', err);
-      toast('Save failed — check console', 'error');
-    }
-  } catch (e) {
-    console.error('Save error:', e);
-  }
-  // Also update localStorage as cache
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(investors));
 }
 
 async function saveAllInvestors() {
@@ -1684,33 +1611,46 @@ async function saveAllInvestors() {
       toast('⚠️ DB save failed (' + resp.status + ')', 'error');
     } else if (result.failed && result.failed.length > 0) {
       console.warn('Failed rows:', result.failed);
-      toast('⚠️ ' + result.failed.length + ' rows failed to save — ' + result.saved + ' saved', 'error');
+      toast('⚠️ ' + result.failed.length + ' rows failed to save', 'error');
     }
   } catch (e) {
     console.error('Bulk save error:', e);
-    toast('⚠️ Database unreachable — changes saved locally only', 'error');
+    toast('⚠️ Database unreachable — saved locally only', 'error');
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(investors));
+}
+
+async function saveInvestor(inv) {
+  try {
+    const resp = await fetch('/api/db?action=upsert', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(inv)
+    });
+    if (!resp.ok) {
+      console.error('Save failed:', resp.status);
+      toast('⚠️ Save failed', 'error');
+    }
+  } catch (e) {
+    console.error('Save error:', e);
   }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(investors));
 }
 
 async function deleteInvestorFromServer(id) {
   try {
-    await fetch('/api/db?action=delete&id=' + encodeURIComponent(id), { method: 'DELETE' });
-  } catch (e) {
-    console.error('Delete error:', e);
-  }
+    await fetch('/api/db?id=' + encodeURIComponent(id), { method: 'DELETE' });
+  } catch (e) { console.error('Delete error:', e); }
 }
 
-// Legacy wrappers — saveData now triggers server save
+// Debounced save — collects rapid edits into one bulk call
 function saveData(data) {
-  // Debounced batch save — collects rapid saves into one bulk call
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   if (saveData._timer) clearTimeout(saveData._timer);
   saveData._timer = setTimeout(() => saveAllInvestors(), 800);
 }
 
 function loadData() {
-  // Synchronous fallback for initial load — real data comes from async init
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; }
 }
 
@@ -1882,10 +1822,9 @@ function renderCards() {
   const search = document.getElementById('searchInput').value.toLowerCase();
 
   let filtered = investors.filter(inv => {
-    if (currentTab === 'ghosted') return inv.status === 'ghosted';
+    if (currentTab !== 'all' && currentTab !== 'archived') return inv.status === currentTab && inv.status !== 'archived' && inv.status !== 'declined';
     if (currentTab === 'archived') return inv.status === 'archived' || inv.status === 'declined';
-    if (currentTab !== 'all') return inv.status === currentTab && !['archived','declined','ghosted'].includes(inv.status);
-    return !['archived','declined','ghosted'].includes(inv.status);
+    return inv.status !== 'archived' && inv.status !== 'declined';
   });
 
   if (search) {
@@ -1960,9 +1899,7 @@ function renderCards() {
         ${inv.checkSize ? `<span class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>${esc(inv.checkSize)}</span>` : ''}
         ${inv.owner ? `<span class="card-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${esc(inv.owner)}</span>` : ''}
         <span class="card-nda-badge nda-${inv.nda || 'none'}">${inv.nda === 'signed' ? '✓ NDA' : inv.nda === 'pending' ? '⏳ NDA' : ''}</span>
-        ${inv.email ? `<span class="card-meta-item" data-field="email" style="color:var(--green);font-size:11px;">✉ ${esc(inv.email)}</span>` : ''}
-        ${inv.nextMeeting ? `<span class="card-meta-item" style="color:var(--gold-dark);font-size:11px;">📅 ${new Date(inv.nextMeeting + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric' })}</span>` : ''}
-        ${inv.lastContact ? `<span class="card-meta-item" style="font-size:11px;">Last: ${new Date(inv.lastContact + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric' })}</span>` : ''}
+        ${inv.email ? `<span class="card-meta-item" style="color:var(--green);font-size:11px;">✉ ${esc(inv.email)}</span>` : ''}
       </div>
       ${hasLinks ? `<div class="card-links" onclick="event.stopPropagation()">
         ${inv.website ? `<a class="card-link" href="${esc(inv.website)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>Website</a>` : ''}
@@ -1970,7 +1907,6 @@ function renderCards() {
       </div>` : ''}
       ${inv.thesis ? `<div class="card-thesis">${esc(inv.thesis)}</div>` : ''}
       ${inv.notes ? `<div class="card-note">${esc(inv.notes)}</div>` : ''}
-      ${inv.timeline && inv.timeline.length > 0 ? `<div class="card-activity">${esc(inv.timeline[0].text)}${inv.timeline[0].date ? ' · ' + new Date(inv.timeline[0].date).toLocaleDateString('en-US', { month:'short', day:'numeric' }) : ''}</div>` : ''}
     </div>
   `}).join('');
 
@@ -1978,7 +1914,7 @@ function renderCards() {
 }
 
 function updateCounts() {
-  const active = investors.filter(i => !['archived','declined','ghosted'].includes(i.status));
+  const active = investors.filter(i => !['archived','declined'].includes(i.status));
   const all = active.length;
   document.getElementById('statTotal').textContent = investors.length;
   document.getElementById('statActive').textContent = all;
@@ -1992,7 +1928,6 @@ function updateCounts() {
   document.getElementById('countDd').textContent = investors.filter(i => i.status === 'due-diligence').length;
   document.getElementById('countNda').textContent = investors.filter(i => i.status === 'nda-sent').length;
   document.getElementById('countTs').textContent = investors.filter(i => i.status === 'term-sheet').length;
-  document.getElementById('countGhosted').textContent = investors.filter(i => i.status === 'ghosted').length;
   document.getElementById('countArchived').textContent = investors.filter(i => ['archived','declined'].includes(i.status)).length;
 }
 
@@ -2007,30 +1942,12 @@ function setView(view) {
   document.getElementById('viewBoard').classList.toggle('active', view === 'board');
   document.getElementById('cardsContainer').style.display = view === 'cards' ? '' : 'none';
   document.getElementById('boardContainer').classList.toggle('visible', view === 'board');
+  // Hide filter bar extras in board view (sorting is irrelevant — board sorts by stage)
   if (view === 'board') renderBoard();
   else renderCards();
 }
 
-let currentCols = 2;
-
-function setColumns(n, btn) {
-  currentCols = n;
-  document.getElementById('cardsContainer').style.setProperty('--card-cols', n);
-  const dd = document.getElementById('layoutDropdown');
-  dd.querySelectorAll('.filter-dropdown-item').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-}
-
-function updateCardDensity() {
-  const container = document.getElementById('cardsContainer');
-  container.classList.toggle('hide-thesis', !document.getElementById('togThesis').checked);
-  container.classList.toggle('hide-notes', !document.getElementById('togNotes').checked);
-  container.classList.toggle('hide-links', !document.getElementById('togLinks').checked);
-  container.classList.toggle('hide-email', !document.getElementById('togEmail').checked);
-  container.classList.toggle('hide-activity', !document.getElementById('togActivity').checked);
-}
-
-let BOARD_STAGES = [
+const BOARD_STAGES = [
   { key: 'new', label: 'New', color: 'var(--blue)' },
   { key: 'contacted', label: 'Contacted', color: 'var(--orange)' },
   { key: 'meeting', label: 'Meeting', color: 'var(--gold-dark)' },
@@ -2038,26 +1955,15 @@ let BOARD_STAGES = [
   { key: 'nda-sent', label: 'NDA Sent', color: 'var(--green)' },
   { key: 'term-sheet', label: 'Term Sheet', color: 'var(--green)' },
   { key: 'closed', label: 'Closed', color: 'var(--green)' },
-  { key: 'ghosted', label: 'Ghosted', color: '#8C4A6A' },
   { key: 'declined', label: 'Passed', color: 'var(--red)' },
   { key: 'archived', label: 'Archived', color: 'var(--text-secondary)' },
 ];
-
-// Restore saved column order
-try {
-  const savedOrder = JSON.parse(localStorage.getItem('fb_board_order'));
-  if (savedOrder && savedOrder.length === BOARD_STAGES.length) {
-    const reordered = savedOrder.map(key => BOARD_STAGES.find(s => s.key === key)).filter(Boolean);
-    if (reordered.length === BOARD_STAGES.length) BOARD_STAGES = reordered;
-  }
-} catch(e) {}
-
-let dragColIdx = null;
 
 function renderBoard() {
   const container = document.getElementById('boardContainer');
   const search = document.getElementById('searchInput').value.toLowerCase();
 
+  // Apply owner filter
   let pool = investors;
   if (ownerFilter !== 'all') {
     if (ownerFilter === 'unassigned') pool = pool.filter(inv => !inv.owner || inv.owner.trim() === '');
@@ -2072,7 +1978,7 @@ function renderBoard() {
     );
   }
 
-  const cols = BOARD_STAGES.map((stage, colIdx) => {
+  const cols = BOARD_STAGES.map(stage => {
     const items = pool.filter(inv => inv.status === stage.key).sort((a, b) => a.firm.localeCompare(b.firm));
     const cells = items.length > 0
       ? items.map(inv => `
@@ -2084,23 +1990,15 @@ function renderBoard() {
             ${inv.checkSize ? `<span class="board-cell-tag check">${esc(inv.checkSize)}</span>` : ''}
             ${inv.email ? `<span class="board-cell-tag email">✉</span>` : ''}
             ${inv.nda === 'signed' ? `<span class="board-cell-tag nda">NDA ✓</span>` : inv.nda === 'pending' ? `<span class="board-cell-tag nda">NDA ⏳</span>` : ''}
-            ${inv.nextMeeting ? `<span class="board-cell-tag meeting-date">📅 ${new Date(inv.nextMeeting + 'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>` : inv.lastContact ? `<span class="board-cell-tag date">Last: ${new Date(inv.lastContact + 'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>` : ''}
           </div>
         </div>
       `).join('')
       : '<div class="board-empty">No investors</div>';
 
     return `
-      <div class="board-col" draggable="true" data-col-idx="${colIdx}"
-        ondragstart="boardDragStart(event, ${colIdx})"
-        ondragover="boardDragOver(event)"
-        ondrop="boardDrop(event, ${colIdx})"
-        ondragend="boardDragEnd(event)">
-        <div class="board-col-header" style="cursor:grab;">
-          <span style="display:flex;align-items:center;gap:6px;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;opacity:0.4;"><path d="M8 6h.01M8 12h.01M8 18h.01M16 6h.01M16 12h.01M16 18h.01"/></svg>
-            ${stage.label}
-          </span>
+      <div class="board-col">
+        <div class="board-col-header">
+          ${stage.label}
           <span class="board-col-count">${items.length}</span>
         </div>
         <div class="board-col-body">${cells}</div>
@@ -2112,49 +2010,8 @@ function renderBoard() {
   updateCounts();
 }
 
-// Board column drag-and-drop reordering
-function boardDragStart(e, idx) {
-  dragColIdx = idx;
-  e.dataTransfer.effectAllowed = 'move';
-  e.target.style.opacity = '0.5';
-}
-
-function boardDragOver(e) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-  // Visual feedback
-  const col = e.target.closest('.board-col');
-  if (col) {
-    document.querySelectorAll('.board-col').forEach(c => c.style.borderLeft = '');
-    col.style.borderLeft = '3px solid var(--gold)';
-  }
-}
-
-function boardDrop(e, targetIdx) {
-  e.preventDefault();
-  document.querySelectorAll('.board-col').forEach(c => { c.style.borderLeft = ''; c.style.opacity = ''; });
-  if (dragColIdx === null || dragColIdx === targetIdx) return;
-
-  // Reorder BOARD_STAGES
-  const moved = BOARD_STAGES.splice(dragColIdx, 1)[0];
-  BOARD_STAGES.splice(targetIdx, 0, moved);
-
-  // Save order to localStorage
-  localStorage.setItem('fb_board_order', JSON.stringify(BOARD_STAGES.map(s => s.key)));
-
-  dragColIdx = null;
-  renderBoard();
-  toast('Board columns reordered');
-}
-
-function boardDragEnd(e) {
-  e.target.style.opacity = '';
-  document.querySelectorAll('.board-col').forEach(c => c.style.borderLeft = '');
-  dragColIdx = null;
-}
-
 function statusLabel(s) {
-  const map = { 'new':'New', 'contacted':'Contacted', 'meeting':'Meeting', 'due-diligence':'DD', 'nda-sent':'NDA Sent', 'term-sheet':'Term Sheet', 'closed':'Closed', 'ghosted':'Ghosted', 'archived':'Archived', 'declined':'Declined' };
+  const map = { 'new':'New', 'contacted':'Contacted', 'meeting':'Meeting', 'due-diligence':'DD', 'nda-sent':'NDA Sent', 'term-sheet':'Term Sheet', 'closed':'Closed', 'archived':'Archived', 'declined':'Declined' };
   return map[s] || s;
 }
 
@@ -2197,7 +2054,7 @@ function parseMinCheckSize(str) {
   return val;
 }
 
-const STATUS_ORDER = { 'due-diligence': 0, 'nda-sent': 1, 'term-sheet': 2, 'meeting': 3, 'contacted': 4, 'new': 5, 'closed': 6, 'ghosted': 7, 'declined': 8, 'archived': 9 };
+const STATUS_ORDER = { 'due-diligence': 0, 'nda-sent': 1, 'term-sheet': 2, 'meeting': 3, 'contacted': 4, 'new': 5, 'closed': 6, 'declined': 7, 'archived': 8 };
 
 function getLastActivity(inv) {
   if (inv.timeline && inv.timeline.length > 0) return new Date(inv.timeline[0].date).getTime();
@@ -2559,7 +2416,6 @@ function buildForm(inv) {
           <option value="nda-sent" ${inv.status==='nda-sent'?'selected':''}>NDA Sent</option>
           <option value="term-sheet" ${inv.status==='term-sheet'?'selected':''}>Term Sheet</option>
           <option value="closed" ${inv.status==='closed'?'selected':''}>Closed</option>
-          <option value="ghosted" ${inv.status==='ghosted'?'selected':''}>Ghosted</option>
           <option value="declined" ${inv.status==='declined'?'selected':''}>Declined</option>
           <option value="archived" ${inv.status==='archived'?'selected':''}>Archived</option>
         </select>
@@ -2589,16 +2445,6 @@ function buildForm(inv) {
     <div class="form-group">
       <label class="form-label">Investment Stage</label>
       <input class="form-input" id="fStage" value="${esc(inv.stage || '')}" placeholder="e.g. Seed–Series A">
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Last Contact</label>
-        <input class="form-input" id="fLastContact" type="date" value="${inv.lastContact ? inv.lastContact.substring(0,10) : ''}">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Next Meeting</label>
-        <input class="form-input" id="fNextMeeting" type="date" value="${inv.nextMeeting ? inv.nextMeeting.substring(0,10) : ''}">
-      </div>
     </div>
     <div class="form-group">
       <label class="form-label">Investment Strategy / Thesis</label>
@@ -2649,8 +2495,6 @@ function saveLead() {
     checkSize: document.getElementById('fCheckSize').value.trim(),
     owner: document.getElementById('fOwner').value,
     stage: document.getElementById('fStage').value.trim(),
-    lastContact: document.getElementById('fLastContact').value || '',
-    nextMeeting: document.getElementById('fNextMeeting').value || '',
     thesis: document.getElementById('fThesis').value.trim(),
     notes: document.getElementById('fNotes').value.trim(),
   };
@@ -2726,37 +2570,17 @@ function addQuickNote() {
   const text = input.value.trim();
   if (!text || !editingId) return;
 
-  // Save current form values to the investor object before rebuilding
-  const inv = investors.find(i => i.id === editingId);
-  if (!inv) return;
-
-  // Capture all unsaved form state
-  const fFirm = document.getElementById('fFirm');
-  if (fFirm) {
-    inv.firm = fFirm.value.trim() || inv.firm;
-    inv.contact = document.getElementById('fContact')?.value.trim() || inv.contact;
-    inv.email = document.getElementById('fEmail')?.value.trim() || inv.email;
-    inv.website = document.getElementById('fWebsite')?.value.trim() || inv.website;
-    inv.linkedin = document.getElementById('fLinkedin')?.value.trim() || inv.linkedin;
-    inv.status = document.getElementById('fStatus')?.value || inv.status;
-    inv.nda = document.getElementById('fNda')?.value || inv.nda;
-    inv.checkSize = document.getElementById('fCheckSize')?.value.trim() || inv.checkSize;
-    inv.owner = document.getElementById('fOwner')?.value ?? inv.owner;
-    inv.stage = document.getElementById('fStage')?.value.trim() || inv.stage;
-    inv.lastContact = document.getElementById('fLastContact')?.value || inv.lastContact;
-    inv.nextMeeting = document.getElementById('fNextMeeting')?.value || inv.nextMeeting;
-    inv.thesis = document.getElementById('fThesis')?.value.trim() || inv.thesis;
-    inv.notes = document.getElementById('fNotes')?.value.trim() || inv.notes;
-  }
-
   addTimelineEntry(editingId, text);
   saveData(investors);
   input.value = '';
   toast('Note added');
 
-  // Re-render panel with preserved form state
-  document.getElementById('panelTitle').textContent = inv.firm;
-  document.getElementById('panelBody').innerHTML = buildForm(inv) + buildTimeline(inv);
+  // Re-render panel timeline
+  const inv = investors.find(i => i.id === editingId);
+  if (inv) {
+    document.getElementById('panelTitle').textContent = inv.firm;
+    document.getElementById('panelBody').innerHTML = buildForm(inv) + buildTimeline(inv);
+  }
 }
 
 
@@ -3026,8 +2850,7 @@ function mapImportStatus(s) {
   if (['nda sent', 'nda out'].some(x => s.includes(x))) return 'nda-sent';
   if (['term sheet', 'term-sheet'].some(x => s.includes(x))) return 'term-sheet';
   if (['closed', 'committed'].some(x => s.includes(x))) return 'closed';
-  if (s.includes('ghosted')) return 'ghosted';
-  if (['passed', 'not a fit', 'not interested', 'declined'].some(x => s.includes(x))) return 'declined';
+  if (['passed', 'not a fit', 'not interested', 'declined', 'ghosted'].some(x => s.includes(x))) return 'declined';
   if (['archived', 'too big', 'no fit'].some(x => s.includes(x))) return 'archived';
   return '';
 }
@@ -3203,7 +3026,7 @@ function showImportPreview(fileName) {
   modal.style.display = 'flex';
 }
 
-async function commitImport() {
+function commitImport() {
   let added = 0, updated = 0;
   const addedFirms = [];
   const updatedFirms = [];
@@ -3233,7 +3056,6 @@ async function commitImport() {
   }
 
   saveData(investors);
-  await saveAllInvestors();
   renderCards();
   closeImportModal();
 
@@ -3900,30 +3722,27 @@ function composeQuickEmail(investorId) {
 // INIT
 // ════════════════════════════════════════════════════════════════
 (async function init() {
-  // Check auth first
   const authed = await checkAuth();
-  
-  // Always fetch server status
   await fetchServerStatus();
   updateSetupBanner();
 
-  // Load investors from Supabase
+  // Load investors from Netlify DB (Neon)
   toast('Loading pipeline...');
   const serverData = await loadDataFromServer();
 
   if (serverData && serverData.length > 0) {
-    // Server has data — use it as source of truth
+    // Server has data — that's source of truth
     investors = serverData;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(investors));
     dbReady = true;
 
-    // Check if seed data has investors not yet in the database (migration)
-    const serverIds = new Set(serverData.map(i => i.firm.toLowerCase().trim()));
-    const seedInvestors = getSeedData();
-    const missing = seedInvestors.filter(s => !serverIds.has(s.firm.toLowerCase().trim()));
+    // Check if local seed has investors not yet in the DB (one-time migration)
+    const serverFirms = new Set(serverData.map(i => i.firm.toLowerCase().trim()));
+    const seedInvestors = (typeof getSeedData === 'function') ? getSeedData() : [];
+    const missing = seedInvestors.filter(s => !serverFirms.has(s.firm.toLowerCase().trim()));
 
     if (missing.length > 0) {
-      toast('Syncing ' + missing.length + ' missing investors to database...');
+      toast('Syncing ' + missing.length + ' missing investors...');
       missing.forEach((s, i) => { s.id = 'inv_seed_' + Date.now() + '_' + i; });
       investors = [...investors, ...missing];
       localStorage.setItem(STORAGE_KEY, JSON.stringify(investors));
@@ -3931,14 +3750,14 @@ function composeQuickEmail(investorId) {
       toast(missing.length + ' investors synced', 'success');
     }
   } else if (investors.length > 0) {
-    // Database is empty but localStorage has data — seed the DB
+    // DB empty but localStorage has data — push it
     toast('Seeding database with ' + investors.length + ' investors...');
     await saveAllInvestors();
     dbReady = true;
     toast('Database seeded', 'success');
   } else {
-    // Nothing anywhere — use seed data
-    const seedInvestors = getSeedData();
+    // Nothing anywhere — use built-in seed
+    const seedInvestors = (typeof getSeedData === 'function') ? getSeedData() : [];
     if (seedInvestors.length > 0) {
       seedInvestors.forEach((s, i) => { s.id = 'inv_seed_' + Date.now() + '_' + i; });
       investors = seedInvestors;
@@ -3952,7 +3771,6 @@ function composeQuickEmail(investorId) {
 
   renderCards();
 
-  // If authenticated, auto-set owner for new leads
   if (currentUser) {
     const firstName = currentUser.name?.split(' ')[0] || currentUser.email?.split('@')[0];
     const members = settings.teamMembers.split(',').map(m => m.trim());
