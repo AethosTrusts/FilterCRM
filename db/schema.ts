@@ -15,8 +15,8 @@ export const investors = pgTable("investors", {
   thesis: text().notNull().default(""),
   notes: text().notNull().default(""),
   timeline: jsonb().$type<Array<{ date: string; note: string }>>().notNull().default([]),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at", { mode: "string" }).defaultNow(),
   lastContact: date("last_contact"),
   nextMeeting: date("next_meeting"),
-  profiledAt: timestamp("profiled_at"),
+  profiledAt: timestamp("profiled_at", { mode: "string" }),
 });
