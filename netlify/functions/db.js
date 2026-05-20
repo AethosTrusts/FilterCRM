@@ -1,124 +1,157 @@
-// Supabase database proxy — all investor CRUD
-// Environment variables: SUPABASE_URL, SUPABASE_KEY
+// Netlify DB (Neon Postgres) — all investor CRUD
+// Uses @neondatabase/serverless directly (the underlying driver)
+
+let neonPromise = null;
+function getNeon() {
+  if (!neonPromise) {
+    neonPromise = import('@neondatabase/serverless').then(m => {
+      const url = process.env.NETLIFY_DATABASE_URL || process.env.DATABASE_URL;
+      return m.neon(url);
+    });
+  }
+  return neonPromise;
+}
 
 exports.handler = async function(event, context) {
-  var SUPABASE_URL = process.env.SUPABASE_URL;
-  var SUPABASE_KEY = process.env.SUPABASE_KEY;
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
-    return { statusCode: 500, body: JSON.stringify({ error: "SUPABASE_URL or SUPABASE_KEY not set" }) };
+  // Check connection string is set
+  if (!process.env.NETLIFY_DATABASE_URL && !process.env.DATABASE_URL) {
+    return json(500, {
+      error: 'NETLIFY_DATABASE_URL not set',
+      hint: 'Add the Neon connection string as an environment variable in Netlify.'
+    });
   }
 
-  var hdrs = {
-    "apikey": SUPABASE_KEY,
-    "Authorization": "Bearer " + SUPABASE_KEY,
-    "Content-Type": "application/json"
-  };
-  var base = SUPABASE_URL + "/rest/v1/investors";
-  var params = event.queryStringParameters || {};
-  var action = params.action || '';
-
   try {
-    // GET — load all
-    if (event.httpMethod === "GET" && !action) {
-      var resp = await fetch(base + "?order=firm.asc&limit=1000", { headers: hdrs });
-      if (!resp.ok) return err(resp.status, await resp.text());
-      return ok(200, (await resp.json()).map(dbToApp));
+    const sql = await getNeon();
+    const action = (event.queryStringParameters || {}).action || '';
+    const method = event.httpMethod;
+
+    // Auto-create table on first call
+    await ensureTable(sql);
+
+    // GET — load all investors
+    if (method === 'GET' && !action) {
+      const rows = await sql`SELECT * FROM investors ORDER BY firm ASC LIMIT 1000`;
+      return json(200, rows.map(dbToApp));
     }
 
-    // Discover columns for write operations
-    var cols = await discoverColumns(base, hdrs);
-
-    // POST upsert — single
-    if (event.httpMethod === "POST" && action === "upsert") {
-      var inv = JSON.parse(event.body);
-      var row = filterCols(appToDb(inv), cols);
-      var resp = await fetch(base + "?on_conflict=id", {
-        method: "POST",
-        headers: merge(hdrs, { "Prefer": "return=representation,resolution=merge-duplicates" }),
-        body: JSON.stringify(row)
-      });
-      if (!resp.ok) return err(resp.status, await resp.text());
-      var result = await resp.json();
-      return ok(200, result[0] ? dbToApp(result[0]) : {});
+    // POST upsert — single investor
+    if (method === 'POST' && action === 'upsert') {
+      const inv = JSON.parse(event.body);
+      const row = appToDb(inv);
+      const result = await sql`
+        INSERT INTO investors (id, firm, contact, email, website, linkedin, status, nda, check_size, owner, stage, thesis, notes, timeline, last_contact, next_meeting, profiled_at, created_at)
+        VALUES (${row.id}, ${row.firm}, ${row.contact}, ${row.email}, ${row.website}, ${row.linkedin}, ${row.status}, ${row.nda}, ${row.check_size}, ${row.owner}, ${row.stage}, ${row.thesis}, ${row.notes}, ${JSON.stringify(row.timeline)}::jsonb, ${row.last_contact}, ${row.next_meeting}, ${row.profiled_at}, ${row.created_at})
+        ON CONFLICT (id) DO UPDATE SET
+          firm = EXCLUDED.firm,
+          contact = EXCLUDED.contact,
+          email = EXCLUDED.email,
+          website = EXCLUDED.website,
+          linkedin = EXCLUDED.linkedin,
+          status = EXCLUDED.status,
+          nda = EXCLUDED.nda,
+          check_size = EXCLUDED.check_size,
+          owner = EXCLUDED.owner,
+          stage = EXCLUDED.stage,
+          thesis = EXCLUDED.thesis,
+          notes = EXCLUDED.notes,
+          timeline = EXCLUDED.timeline,
+          last_contact = EXCLUDED.last_contact,
+          next_meeting = EXCLUDED.next_meeting,
+          profiled_at = EXCLUDED.profiled_at
+        RETURNING *
+      `;
+      return json(200, result[0] ? dbToApp(result[0]) : {});
     }
 
-    // POST bulk — chunked with individual fallback
-    if (event.httpMethod === "POST" && action === "bulk") {
-      var invs = JSON.parse(event.body);
-      var allRows = invs.map(function(inv) { return filterCols(appToDb(inv), cols); });
-      var saved = 0;
-      var failed = [];
+    // POST bulk — upsert many investors
+    if (method === 'POST' && action === 'bulk') {
+      const invs = JSON.parse(event.body);
+      let saved = 0;
+      const failed = [];
 
-      for (var i = 0; i < allRows.length; i += 25) {
-        var chunk = allRows.slice(i, i + 25);
-        var resp = await fetch(base + "?on_conflict=id", {
-          method: "POST",
-          headers: merge(hdrs, { "Prefer": "return=minimal,resolution=merge-duplicates" }),
-          body: JSON.stringify(chunk)
-        });
-        if (resp.ok) {
-          saved += chunk.length;
-        } else {
-          // Batch failed — try each row individually
-          for (var j = 0; j < chunk.length; j++) {
-            var s = await fetch(base + "?on_conflict=id", {
-              method: "POST",
-              headers: merge(hdrs, { "Prefer": "return=minimal,resolution=merge-duplicates" }),
-              body: JSON.stringify(chunk[j])
-            });
-            if (s.ok) {
-              saved++;
-            } else {
-              failed.push({ id: chunk[j].id, firm: chunk[j].firm, err: await s.text() });
-            }
-          }
+      for (const inv of invs) {
+        try {
+          const row = appToDb(inv);
+          await sql`
+            INSERT INTO investors (id, firm, contact, email, website, linkedin, status, nda, check_size, owner, stage, thesis, notes, timeline, last_contact, next_meeting, profiled_at, created_at)
+            VALUES (${row.id}, ${row.firm}, ${row.contact}, ${row.email}, ${row.website}, ${row.linkedin}, ${row.status}, ${row.nda}, ${row.check_size}, ${row.owner}, ${row.stage}, ${row.thesis}, ${row.notes}, ${JSON.stringify(row.timeline)}::jsonb, ${row.last_contact}, ${row.next_meeting}, ${row.profiled_at}, ${row.created_at})
+            ON CONFLICT (id) DO UPDATE SET
+              firm = EXCLUDED.firm,
+              contact = EXCLUDED.contact,
+              email = EXCLUDED.email,
+              website = EXCLUDED.website,
+              linkedin = EXCLUDED.linkedin,
+              status = EXCLUDED.status,
+              nda = EXCLUDED.nda,
+              check_size = EXCLUDED.check_size,
+              owner = EXCLUDED.owner,
+              stage = EXCLUDED.stage,
+              thesis = EXCLUDED.thesis,
+              notes = EXCLUDED.notes,
+              timeline = EXCLUDED.timeline,
+              last_contact = EXCLUDED.last_contact,
+              next_meeting = EXCLUDED.next_meeting,
+              profiled_at = EXCLUDED.profiled_at
+          `;
+          saved++;
+        } catch (e) {
+          failed.push({ id: inv.id, firm: inv.firm, err: e.message });
         }
       }
-
-      return ok(200, { saved: saved, total: allRows.length, failed: failed });
+      return json(200, { saved: saved, total: invs.length, failed: failed });
     }
 
     // DELETE
-    if (event.httpMethod === "DELETE") {
-      var id = params.id;
-      if (!id) return err(400, "id required");
-      var resp = await fetch(base + "?id=eq." + encodeURIComponent(id), { method: "DELETE", headers: hdrs });
-      if (!resp.ok) return err(resp.status, await resp.text());
-      return ok(200, { deleted: id });
+    if (method === 'DELETE') {
+      const id = (event.queryStringParameters || {}).id;
+      if (!id) return json(400, { error: 'id required' });
+      await sql`DELETE FROM investors WHERE id = ${id}`;
+      return json(200, { deleted: id });
     }
 
-    return err(400, "Unknown action");
+    return json(400, { error: 'Unknown action' });
   } catch (e) {
-    return err(500, e.message);
+    console.error('DB error:', e.message, e.stack);
+    return json(500, { error: e.message, stack: e.stack });
   }
 };
 
-async function discoverColumns(base, hdrs) {
-  try {
-    var resp = await fetch(base + "?limit=1", { headers: hdrs });
-    if (resp.ok) {
-      var rows = await resp.json();
-      if (rows.length > 0) return Object.keys(rows[0]);
-    }
-  } catch(e) {}
-  return ["id","firm","contact","email","website","linkedin","status","nda","check_size","owner","stage","thesis","notes","timeline","created_at"];
-}
-
-function filterCols(row, cols) {
-  var out = {};
-  for (var k in row) {
-    if (cols.indexOf(k) !== -1) out[k] = row[k];
-  }
-  return out;
+async function ensureTable(sql) {
+  await sql`
+    CREATE TABLE IF NOT EXISTS investors (
+      id TEXT PRIMARY KEY,
+      firm TEXT NOT NULL DEFAULT '',
+      contact TEXT DEFAULT '',
+      email TEXT DEFAULT '',
+      website TEXT DEFAULT '',
+      linkedin TEXT DEFAULT '',
+      status TEXT DEFAULT 'new',
+      nda TEXT DEFAULT 'none',
+      check_size TEXT DEFAULT '',
+      owner TEXT DEFAULT '',
+      stage TEXT DEFAULT '',
+      thesis TEXT DEFAULT '',
+      notes TEXT DEFAULT '',
+      timeline JSONB DEFAULT '[]'::jsonb,
+      last_contact DATE,
+      next_meeting DATE,
+      profiled_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS idx_investors_status ON investors(status)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_investors_firm ON investors(firm)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_investors_owner ON investors(owner)`;
 }
 
 function appToDb(inv) {
-  var tl = inv.timeline || [];
-  if (typeof tl === 'string') { try { tl = JSON.parse(tl); } catch(e) { tl = []; } }
+  let tl = inv.timeline || [];
+  if (typeof tl === 'string') { try { tl = JSON.parse(tl); } catch (e) { tl = []; } }
   if (!Array.isArray(tl)) tl = [];
 
-  var row = {
-    id: String(inv.id || 'inv_' + Date.now() + '_' + Math.random().toString(36).substr(2,5)),
+  return {
+    id: String(inv.id || 'inv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)),
     firm: String(inv.firm || ''),
     contact: String(inv.contact || ''),
     email: String(inv.email || ''),
@@ -132,50 +165,56 @@ function appToDb(inv) {
     thesis: String(inv.thesis || ''),
     notes: String(inv.notes || ''),
     timeline: tl,
+    last_contact: validDate(inv.lastContact),
+    next_meeting: validDate(inv.nextMeeting),
+    profiled_at: validTs(inv.profiledAt),
     created_at: validTs(inv.created) || new Date().toISOString()
   };
-
-  var lc = String(inv.lastContact || '');
-  if (lc.length >= 10 && !isNaN(Date.parse(lc.substring(0,10)))) row.last_contact = lc.substring(0,10);
-
-  var nm = String(inv.nextMeeting || '');
-  if (nm.length >= 10 && !isNaN(Date.parse(nm.substring(0,10)))) row.next_meeting = nm.substring(0,10);
-
-  var pa = String(inv.profiledAt || '');
-  if (pa.length > 4 && !isNaN(Date.parse(pa))) row.profiled_at = pa;
-
-  return row;
 }
 
 function dbToApp(row) {
-  var tl = row.timeline || [];
-  if (typeof tl === 'string') { try { tl = JSON.parse(tl); } catch(e) { tl = []; } }
+  let tl = row.timeline || [];
+  if (typeof tl === 'string') { try { tl = JSON.parse(tl); } catch (e) { tl = []; } }
   if (!Array.isArray(tl)) tl = [];
+
   return {
-    id: row.id, firm: row.firm || '', contact: row.contact || '', email: row.email || '',
-    website: row.website || '', linkedin: row.linkedin || '', status: row.status || 'new',
-    nda: row.nda || 'none', checkSize: row.check_size || '', owner: row.owner || '',
-    stage: row.stage || '', thesis: row.thesis || '', notes: row.notes || '', timeline: tl,
-    lastContact: row.last_contact || '', nextMeeting: row.next_meeting || '',
-    profiledAt: row.profiled_at || '', created: row.created_at || ''
+    id: row.id,
+    firm: row.firm || '',
+    contact: row.contact || '',
+    email: row.email || '',
+    website: row.website || '',
+    linkedin: row.linkedin || '',
+    status: row.status || 'new',
+    nda: row.nda || 'none',
+    checkSize: row.check_size || '',
+    owner: row.owner || '',
+    stage: row.stage || '',
+    thesis: row.thesis || '',
+    notes: row.notes || '',
+    timeline: tl,
+    lastContact: row.last_contact ? new Date(row.last_contact).toISOString().substring(0, 10) : '',
+    nextMeeting: row.next_meeting ? new Date(row.next_meeting).toISOString().substring(0, 10) : '',
+    profiledAt: row.profiled_at ? new Date(row.profiled_at).toISOString() : '',
+    created: row.created_at ? new Date(row.created_at).toISOString() : ''
   };
+}
+
+function validDate(v) {
+  if (!v) return null;
+  const s = String(v).substring(0, 10);
+  return (s.length === 10 && !isNaN(Date.parse(s))) ? s : null;
 }
 
 function validTs(v) {
   if (!v) return null;
-  var s = String(v);
-  return (s.length >= 4 && !isNaN(Date.parse(s))) ? s : null;
+  const s = String(v);
+  return (s.length >= 4 && !isNaN(Date.parse(s))) ? new Date(s).toISOString() : null;
 }
 
-function ok(status, data) {
-  return { statusCode: status, headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) };
-}
-function err(status, detail) {
-  return { statusCode: status, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ error: detail }) };
-}
-function merge(a, b) {
-  var out = {};
-  for (var k in a) out[k] = a[k];
-  for (var k in b) out[k] = b[k];
-  return out;
+function json(status, data) {
+  return {
+    statusCode: status,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  };
 }
