@@ -4,6 +4,6 @@
   "description": "Filterbaby investor pipeline CRM",
   "private": true,
   "dependencies": {
-    "@netlify/neon": "*"
+    "@neondatabase/serverless": "*"
   }
 }

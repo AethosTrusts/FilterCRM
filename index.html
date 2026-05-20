@@ -1608,7 +1608,8 @@ async function saveAllInvestors() {
     const result = await resp.json().catch(() => ({}));
     if (!resp.ok) {
       console.error('Bulk save failed:', resp.status, result);
-      toast('⚠️ DB save failed (' + resp.status + ')', 'error');
+      const detail = result.error || result.hint || 'unknown';
+      toast('⚠️ DB save ' + resp.status + ': ' + detail.substring(0, 80), 'error');
     } else if (result.failed && result.failed.length > 0) {
       console.warn('Failed rows:', result.failed);
       toast('⚠️ ' + result.failed.length + ' rows failed to save', 'error');
