@@ -1,0 +1,20 @@
+CREATE TABLE "investors" (
+	"id" text PRIMARY KEY,
+	"firm" text DEFAULT '' NOT NULL,
+	"contact" text DEFAULT '' NOT NULL,
+	"email" text DEFAULT '' NOT NULL,
+	"website" text DEFAULT '' NOT NULL,
+	"linkedin" text DEFAULT '' NOT NULL,
+	"status" text DEFAULT 'new' NOT NULL,
+	"nda" text DEFAULT 'none' NOT NULL,
+	"check_size" text DEFAULT '' NOT NULL,
+	"owner" text DEFAULT '' NOT NULL,
+	"stage" text DEFAULT '' NOT NULL,
+	"thesis" text DEFAULT '' NOT NULL,
+	"notes" text DEFAULT '' NOT NULL,
+	"timeline" jsonb DEFAULT '[]' NOT NULL,
+	"created_at" timestamp DEFAULT now(),
+	"last_contact" date,
+	"next_meeting" date,
+	"profiled_at" timestamp
+);
