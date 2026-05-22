@@ -580,11 +580,12 @@ body {
 }
 .status-new { background: var(--blue-light); color: var(--blue); }
 .status-contacted { background: var(--orange-light); color: var(--orange); }
+.status-needs-follow-up { background: var(--gold-light); color: var(--gold-dark); }
 .status-meeting { background: var(--gold-light); color: var(--gold-dark); }
 .status-due-diligence { background: #F0E8F5; color: #7C4A8C; }
 .status-nda-sent { background: #E8F0F5; color: #4A708C; }
 .status-term-sheet { background: var(--green-light); color: var(--green); }
-.status-closed { background: var(--green-light); color: var(--green); }
+.status-keep-in-touch { background: #F0E8F5; color: #7C4A8C; }
 .status-archived { background: #EEEDEA; color: #999; }
 .status-declined { background: var(--red-light); color: var(--red); }
 
@@ -1440,10 +1441,12 @@ body {
   <button class="tab-btn active" data-tab="all" onclick="setTab('all', this)">All<span class="tab-count" id="countAll">0</span></button>
   <button class="tab-btn" data-tab="new" onclick="setTab('new', this)">New<span class="tab-count" id="countNew">0</span></button>
   <button class="tab-btn" data-tab="contacted" onclick="setTab('contacted', this)">Contacted<span class="tab-count" id="countContacted">0</span></button>
+  <button class="tab-btn" data-tab="needs-follow-up" onclick="setTab('needs-follow-up', this)">Follow-Up<span class="tab-count" id="countFollowUp">0</span></button>
   <button class="tab-btn" data-tab="meeting" onclick="setTab('meeting', this)">Meeting<span class="tab-count" id="countMeeting">0</span></button>
   <button class="tab-btn" data-tab="due-diligence" onclick="setTab('due-diligence', this)">Due Diligence<span class="tab-count" id="countDd">0</span></button>
   <button class="tab-btn" data-tab="nda-sent" onclick="setTab('nda-sent', this)">NDA<span class="tab-count" id="countNda">0</span></button>
   <button class="tab-btn" data-tab="term-sheet" onclick="setTab('term-sheet', this)">Term Sheet<span class="tab-count" id="countTs">0</span></button>
+  <button class="tab-btn" data-tab="keep-in-touch" onclick="setTab('keep-in-touch', this)">Keep in Touch<span class="tab-count" id="countKit">0</span></button>
   <button class="tab-btn" data-tab="archived" onclick="setTab('archived', this)">Archived<span class="tab-count" id="countArchived">0</span></button>
 </div>
 
@@ -1823,9 +1826,10 @@ function renderCards() {
   const search = document.getElementById('searchInput').value.toLowerCase();
 
   let filtered = investors.filter(inv => {
-    if (currentTab !== 'all' && currentTab !== 'archived') return inv.status === currentTab && inv.status !== 'archived' && inv.status !== 'declined';
     if (currentTab === 'archived') return inv.status === 'archived' || inv.status === 'declined';
-    return inv.status !== 'archived' && inv.status !== 'declined';
+    if (currentTab === 'keep-in-touch') return inv.status === 'keep-in-touch';
+    if (currentTab !== 'all') return inv.status === currentTab && !['archived','declined','keep-in-touch'].includes(inv.status);
+    return !['archived','declined','keep-in-touch'].includes(inv.status);
   });
 
   if (search) {
@@ -1915,7 +1919,7 @@ function renderCards() {
 }
 
 function updateCounts() {
-  const active = investors.filter(i => !['archived','declined'].includes(i.status));
+  const active = investors.filter(i => !['archived','declined','keep-in-touch'].includes(i.status));
   const all = active.length;
   document.getElementById('statTotal').textContent = investors.length;
   document.getElementById('statActive').textContent = all;
@@ -1925,10 +1929,12 @@ function updateCounts() {
   document.getElementById('countAll').textContent = all;
   document.getElementById('countNew').textContent = investors.filter(i => i.status === 'new').length;
   document.getElementById('countContacted').textContent = investors.filter(i => i.status === 'contacted').length;
+  document.getElementById('countFollowUp').textContent = investors.filter(i => i.status === 'needs-follow-up').length;
   document.getElementById('countMeeting').textContent = investors.filter(i => i.status === 'meeting').length;
   document.getElementById('countDd').textContent = investors.filter(i => i.status === 'due-diligence').length;
   document.getElementById('countNda').textContent = investors.filter(i => i.status === 'nda-sent').length;
   document.getElementById('countTs').textContent = investors.filter(i => i.status === 'term-sheet').length;
+  document.getElementById('countKit').textContent = investors.filter(i => i.status === 'keep-in-touch').length;
   document.getElementById('countArchived').textContent = investors.filter(i => ['archived','declined'].includes(i.status)).length;
 }
 
@@ -1951,11 +1957,12 @@ function setView(view) {
 const BOARD_STAGES = [
   { key: 'new', label: 'New', color: 'var(--blue)' },
   { key: 'contacted', label: 'Contacted', color: 'var(--orange)' },
+  { key: 'needs-follow-up', label: 'Needs Follow-Up', color: 'var(--gold-dark)' },
   { key: 'meeting', label: 'Meeting', color: 'var(--gold-dark)' },
   { key: 'due-diligence', label: 'Due Diligence', color: 'var(--blue)' },
   { key: 'nda-sent', label: 'NDA Sent', color: 'var(--green)' },
   { key: 'term-sheet', label: 'Term Sheet', color: 'var(--green)' },
-  { key: 'closed', label: 'Closed', color: 'var(--green)' },
+  { key: 'keep-in-touch', label: 'Declined — Keep in Touch', color: '#7C4A8C' },
   { key: 'declined', label: 'Passed', color: 'var(--red)' },
   { key: 'archived', label: 'Archived', color: 'var(--text-secondary)' },
 ];
@@ -2012,7 +2019,7 @@ function renderBoard() {
 }
 
 function statusLabel(s) {
-  const map = { 'new':'New', 'contacted':'Contacted', 'meeting':'Meeting', 'due-diligence':'DD', 'nda-sent':'NDA Sent', 'term-sheet':'Term Sheet', 'closed':'Closed', 'archived':'Archived', 'declined':'Declined' };
+  const map = { 'new':'New', 'contacted':'Contacted', 'needs-follow-up':'Needs Follow-Up', 'meeting':'Meeting', 'due-diligence':'DD', 'nda-sent':'NDA Sent', 'term-sheet':'Term Sheet', 'keep-in-touch':'Keep in Touch', 'archived':'Archived', 'declined':'Passed' };
   return map[s] || s;
 }
 
@@ -2055,7 +2062,7 @@ function parseMinCheckSize(str) {
   return val;
 }
 
-const STATUS_ORDER = { 'due-diligence': 0, 'nda-sent': 1, 'term-sheet': 2, 'meeting': 3, 'contacted': 4, 'new': 5, 'closed': 6, 'declined': 7, 'archived': 8 };
+const STATUS_ORDER = { 'due-diligence': 0, 'nda-sent': 1, 'term-sheet': 2, 'meeting': 3, 'needs-follow-up': 4, 'contacted': 5, 'new': 6, 'keep-in-touch': 7, 'declined': 8, 'archived': 9 };
 
 function getLastActivity(inv) {
   if (inv.timeline && inv.timeline.length > 0) return new Date(inv.timeline[0].date).getTime();
@@ -2412,12 +2419,13 @@ function buildForm(inv) {
         <select class="form-select" id="fStatus">
           <option value="new" ${inv.status==='new'?'selected':''}>New Lead</option>
           <option value="contacted" ${inv.status==='contacted'?'selected':''}>Contacted</option>
+          <option value="needs-follow-up" ${inv.status==='needs-follow-up'?'selected':''}>Needs Follow-Up</option>
           <option value="meeting" ${inv.status==='meeting'?'selected':''}>Meeting Set</option>
           <option value="due-diligence" ${inv.status==='due-diligence'?'selected':''}>Due Diligence</option>
           <option value="nda-sent" ${inv.status==='nda-sent'?'selected':''}>NDA Sent</option>
           <option value="term-sheet" ${inv.status==='term-sheet'?'selected':''}>Term Sheet</option>
-          <option value="closed" ${inv.status==='closed'?'selected':''}>Closed</option>
-          <option value="declined" ${inv.status==='declined'?'selected':''}>Declined</option>
+          <option value="keep-in-touch" ${inv.status==='keep-in-touch'?'selected':''}>Declined — Keep in Touch</option>
+          <option value="declined" ${inv.status==='declined'?'selected':''}>Declined / Passed</option>
           <option value="archived" ${inv.status==='archived'?'selected':''}>Archived</option>
         </select>
       </div>
@@ -2846,11 +2854,13 @@ function mapImportStatus(s) {
   s = s.toString().trim().toLowerCase();
   if (['new', 'new lead'].includes(s)) return 'new';
   if (['contacted', 'reached out', 'sent outreach', 'no reply', 'sent'].some(x => s.includes(x))) return 'contacted';
+  if (['follow up', 'follow-up', 'followup', 'needs follow'].some(x => s.includes(x))) return 'needs-follow-up';
   if (['meeting', 'scheduling', 'had call', 'call'].some(x => s.includes(x))) return 'meeting';
-  if (['dd', 'due diligence', 'diligence', 'nda'].some(x => s.includes(x))) return 'due-diligence';
-  if (['nda sent', 'nda out'].some(x => s.includes(x))) return 'nda-sent';
+  if (['dd', 'due diligence', 'diligence'].some(x => s.includes(x))) return 'due-diligence';
+  if (['nda sent', 'nda out', 'nda'].some(x => s.includes(x))) return 'nda-sent';
   if (['term sheet', 'term-sheet'].some(x => s.includes(x))) return 'term-sheet';
-  if (['closed', 'committed'].some(x => s.includes(x))) return 'closed';
+  if (['keep in touch', 'keep-in-touch', 'kit', 'maybe later'].some(x => s.includes(x))) return 'keep-in-touch';
+  if (['closed', 'committed'].some(x => s.includes(x))) return 'term-sheet';
   if (['passed', 'not a fit', 'not interested', 'declined', 'ghosted'].some(x => s.includes(x))) return 'declined';
   if (['archived', 'too big', 'no fit'].some(x => s.includes(x))) return 'archived';
   return '';
@@ -3736,6 +3746,15 @@ function composeQuickEmail(investorId) {
     investors = serverData;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(investors));
     dbReady = true;
+
+    // One-time migration: convert any 'closed' status to 'term-sheet'
+    const closedCount = investors.filter(i => i.status === 'closed').length;
+    if (closedCount > 0) {
+      investors.forEach(i => { if (i.status === 'closed') i.status = 'term-sheet'; });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(investors));
+      await saveAllInvestors();
+      toast('Migrated ' + closedCount + ' closed records to Term Sheet', 'success');
+    }
 
     // Check if local seed has investors not yet in the DB (one-time migration)
     const serverFirms = new Set(serverData.map(i => i.firm.toLowerCase().trim()));
