@@ -1384,9 +1384,14 @@ body {
     <div class="section-switcher">
       <button class="section-btn active" id="secInvestors" onclick="switchSection('investors')">Pipeline</button>
       <button class="section-btn" id="secPartnerships" onclick="switchSection('partnerships')">Partnerships</button>
+      <button class="section-btn" id="secDocuments" onclick="switchSection('documents')">Documents</button>
     </div>
   </div>
   <div class="header-actions">
+    <button class="header-btn" id="globalSearchBtn" onclick="openGlobalSearch()" title="Search everything">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <span>Search All</span>
+    </button>
     <button class="header-btn" onclick="startResearchAll()" id="researchAllBtn" title="AI-research all un-profiled investors">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       Research
@@ -1577,6 +1582,68 @@ body {
 
   <div class="board-container visible" id="ptnBoardContainer"></div>
 </div><!-- /partnershipsSection -->
+
+<!-- ═══ DOCUMENTS SECTION ═══ -->
+<div id="documentsSection" style="display:none;">
+  <div class="stats-bar" id="docStatsBar">
+    <div class="stat-item"><div class="stat-value" id="docStatTotal">0</div><div class="stat-label">Total</div></div>
+    <div class="stat-item"><div class="stat-value" id="docStatSheets">0</div><div class="stat-label">Sheets</div></div>
+    <div class="stat-item"><div class="stat-value" id="docStatDocs">0</div><div class="stat-label">Docs</div></div>
+    <div class="stat-item"><div class="stat-value" id="docStatNotes">0</div><div class="stat-label">Notes</div></div>
+  </div>
+
+  <div class="filter-bar">
+    <input type="search" class="search-input" id="docSearchInput" placeholder="Search documents, notes, tags..." oninput="renderDocuments()">
+    <div class="filter-dropdown-wrap">
+      <button class="filter-pill" id="docCatBtn" onclick="toggleDropdown('docCatDropdown')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:-2px;margin-right:3px;"><path d="M4 4h16v16H4zM4 9h16M9 4v16"/></svg>Category
+      </button>
+      <div class="filter-dropdown" id="docCatDropdown">
+        <button class="filter-dropdown-item active" onclick="setDocCatFilter('all', this)">All categories</button>
+        <button class="filter-dropdown-item" onclick="setDocCatFilter('Investor', this)">Investor / Fundraising</button>
+        <button class="filter-dropdown-item" onclick="setDocCatFilter('Clinical', this)">Clinical / Product</button>
+        <button class="filter-dropdown-item" onclick="setDocCatFilter('Marketing', this)">Marketing / Content</button>
+        <button class="filter-dropdown-item" onclick="setDocCatFilter('GEO/SEO', this)">GEO / SEO</button>
+        <button class="filter-dropdown-item" onclick="setDocCatFilter('Retail', this)">Retail / Partnerships</button>
+        <button class="filter-dropdown-item" onclick="setDocCatFilter('Contracts', this)">Contracts / Legal</button>
+        <button class="filter-dropdown-item" onclick="setDocCatFilter('Ops/Finance', this)">Ops / Finance</button>
+        <button class="filter-dropdown-item" onclick="setDocCatFilter('Resource', this)">Resource / Roster</button>
+        <button class="filter-dropdown-item" onclick="setDocCatFilter('Note', this)">Notes</button>
+      </div>
+    </div>
+    <div class="filter-dropdown-wrap">
+      <button class="filter-pill" id="docTypeBtn" onclick="toggleDropdown('docTypeDropdown')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:-2px;margin-right:3px;"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>Type
+      </button>
+      <div class="filter-dropdown" id="docTypeDropdown">
+        <button class="filter-dropdown-item active" onclick="setDocTypeFilter('all', this)">All types</button>
+        <button class="filter-dropdown-item" onclick="setDocTypeFilter('sheet', this)">Google Sheet</button>
+        <button class="filter-dropdown-item" onclick="setDocTypeFilter('doc', this)">Google Doc</button>
+        <button class="filter-dropdown-item" onclick="setDocTypeFilter('slides', this)">Slides</button>
+        <button class="filter-dropdown-item" onclick="setDocTypeFilter('pdf', this)">PDF</button>
+        <button class="filter-dropdown-item" onclick="setDocTypeFilter('folder', this)">Folder</button>
+        <button class="filter-dropdown-item" onclick="setDocTypeFilter('dashboard', this)">Dashboard</button>
+        <button class="filter-dropdown-item" onclick="setDocTypeFilter('link', this)">Link</button>
+        <button class="filter-dropdown-item" onclick="setDocTypeFilter('note', this)">Note</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="cards-container" id="docCardsContainer" style="--card-cols:3;"></div>
+</div><!-- /documentsSection -->
+
+<!-- ═══ GLOBAL SEARCH OVERLAY ═══ -->
+<div class="modal-overlay" id="globalSearchModal" onclick="if(event.target===this)closeGlobalSearch()">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:640px;">
+    <div class="modal-header">
+      <input type="search" id="globalSearchInput" placeholder="Search across Pipeline, Partnerships & Documents..." oninput="runGlobalSearch()" style="width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:15px;font-family:inherit;outline:none;">
+    </div>
+    <div class="modal-body" id="globalSearchResults" style="max-height:60vh;overflow-y:auto;min-height:120px;">
+      <div style="color:var(--text-secondary);font-size:13px;text-align:center;padding:30px;">Type to search everything you have access to.</div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeGlobalSearch()" style="flex:1;">Close</button></div>
+  </div>
+</div>
 
 <!-- FAB -->
 <button class="fab" onclick="openPanel('new')" title="Add investor">
@@ -3836,7 +3903,7 @@ function ptnStageLabel(s) {
 
 // ── PERMISSIONS ──
 const PERMANENT_ADMIN_EMAIL = 'liang@filterbaby.com';
-let myPermissions = { canInvestors: false, canPartnerships: false, isAdmin: false };
+let myPermissions = { canInvestors: false, canPartnerships: false, canDocuments: false, isAdmin: false };
 let allPermissions = [];
 
 async function loadMyPermissions() {
@@ -3844,7 +3911,7 @@ async function loadMyPermissions() {
 
   // Permanent admin always has full access
   if (email === PERMANENT_ADMIN_EMAIL) {
-    myPermissions = { canInvestors: true, canPartnerships: true, isAdmin: true };
+    myPermissions = { canInvestors: true, canPartnerships: true, canDocuments: true, isAdmin: true };
     return;
   }
 
@@ -3856,23 +3923,25 @@ async function loadMyPermissions() {
 
       const mine = allPermissions.find(u => u.email.toLowerCase() === email);
       if (mine) {
-        myPermissions = { canInvestors: mine.canInvestors, canPartnerships: mine.canPartnerships, isAdmin: mine.isAdmin };
+        myPermissions = { canInvestors: mine.canInvestors, canPartnerships: mine.canPartnerships, canDocuments: mine.canDocuments, isAdmin: mine.isAdmin };
       } else {
         // No record for this user — no access until Andrew grants it
-        myPermissions = { canInvestors: false, canPartnerships: false, isAdmin: false };
+        myPermissions = { canInvestors: false, canPartnerships: false, canDocuments: false, isAdmin: false };
       }
     }
   } catch (e) {
     console.error('Permission load failed:', e);
-    myPermissions = { canInvestors: false, canPartnerships: false, isAdmin: false };
+    myPermissions = { canInvestors: false, canPartnerships: false, canDocuments: false, isAdmin: false };
   }
 }
 
 function applyPermissions() {
   const secInv = document.getElementById('secInvestors');
   const secPtn = document.getElementById('secPartnerships');
+  const secDoc = document.getElementById('secDocuments');
   const invSection = document.getElementById('investorsSection');
   const ptnSection = document.getElementById('partnershipsSection');
+  const docSection = document.getElementById('documentsSection');
 
   // Show admin access button only to admins
   const permBtn = document.getElementById('permAdminBtn');
@@ -3881,14 +3950,14 @@ function applyPermissions() {
   // Toggle switcher button visibility
   secInv.style.display = myPermissions.canInvestors ? '' : 'none';
   secPtn.style.display = myPermissions.canPartnerships ? '' : 'none';
+  if (secDoc) secDoc.style.display = myPermissions.canDocuments ? '' : 'none';
 
   // No access to anything → lock screen, strip ALL functionality
-  if (!myPermissions.canInvestors && !myPermissions.canPartnerships) {
+  if (!myPermissions.canInvestors && !myPermissions.canPartnerships && !myPermissions.canDocuments) {
     invSection.style.display = 'none';
     ptnSection.style.display = 'none';
-    // Hide every header action button (keep only the user pill for sign-out)
+    if (docSection) docSection.style.display = 'none';
     document.querySelectorAll('.header-actions .header-btn').forEach(b => b.style.display = 'none');
-    // Hide section switcher, FAB, setup banner
     const switcher = document.querySelector('.section-switcher');
     if (switcher) switcher.style.display = 'none';
     const fab = document.querySelector('.fab');
@@ -3897,7 +3966,6 @@ function applyPermissions() {
     if (banner) banner.style.display = 'none';
     const statsBar = document.getElementById('statsBar');
     if (statsBar) statsBar.style.display = 'none';
-    // Close any panel/modal that may have opened
     if (typeof closePanel === 'function') closePanel();
     document.body.style.overflow = '';
     showNoAccessScreen();
@@ -3905,16 +3973,14 @@ function applyPermissions() {
   }
 
   // Pick the default section the user can see
-  if (myPermissions.canInvestors) {
-    switchSection('investors');
-  } else if (myPermissions.canPartnerships) {
-    switchSection('partnerships');
-  }
+  if (myPermissions.canInvestors) switchSection('investors');
+  else if (myPermissions.canPartnerships) switchSection('partnerships');
+  else if (myPermissions.canDocuments) switchSection('documents');
 
   // Hide switcher entirely if user only has one section
   const switcher = document.querySelector('.section-switcher');
   if (switcher) {
-    const count = (myPermissions.canInvestors ? 1 : 0) + (myPermissions.canPartnerships ? 1 : 0);
+    const count = (myPermissions.canInvestors ? 1 : 0) + (myPermissions.canPartnerships ? 1 : 0) + (myPermissions.canDocuments ? 1 : 0);
     switcher.style.display = count > 1 ? '' : 'none';
   }
 }
@@ -3949,6 +4015,7 @@ async function openPermissionsAdmin() {
       <td style="padding:8px 6px;font-size:13px;">${esc(u.email)}${u.email.toLowerCase() === PERMANENT_ADMIN_EMAIL ? ' <span style="color:var(--gold-dark);font-size:10px;">(you · permanent admin)</span>' : ''}</td>
       <td style="text-align:center;"><input type="checkbox" ${u.canInvestors ? 'checked' : ''} ${u.email.toLowerCase() === PERMANENT_ADMIN_EMAIL ? 'disabled' : ''} onchange="updatePerm('${esc(u.email)}','canInvestors',this.checked)"></td>
       <td style="text-align:center;"><input type="checkbox" ${u.canPartnerships ? 'checked' : ''} ${u.email.toLowerCase() === PERMANENT_ADMIN_EMAIL ? 'disabled' : ''} onchange="updatePerm('${esc(u.email)}','canPartnerships',this.checked)"></td>
+      <td style="text-align:center;"><input type="checkbox" ${u.canDocuments ? 'checked' : ''} ${u.email.toLowerCase() === PERMANENT_ADMIN_EMAIL ? 'disabled' : ''} onchange="updatePerm('${esc(u.email)}','canDocuments',this.checked)"></td>
       <td style="text-align:center;"><input type="checkbox" ${u.isAdmin ? 'checked' : ''} ${u.email.toLowerCase() === PERMANENT_ADMIN_EMAIL ? 'disabled' : ''} onchange="updatePerm('${esc(u.email)}','isAdmin',this.checked)"></td>
       <td style="text-align:center;">${u.email.toLowerCase() === PERMANENT_ADMIN_EMAIL ? '' : `<button class="btn btn-sm btn-danger" style="padding:2px 8px;font-size:11px;" onclick="removePerm('${esc(u.email)}')">×</button>`}</td>
     </tr>
@@ -3961,7 +4028,7 @@ async function openPermissionsAdmin() {
         <input class="form-input" id="newPermEmail" placeholder="user@filterbaby.com" style="flex:1;">
         <button class="btn btn-primary btn-sm" onclick="addPerm()">Add</button>
       </div>
-      <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">New users start with Partnerships access. Toggle below to adjust.</div>
+      <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">New users start with Partnerships + Documents access. Toggle below to adjust.</div>
     </div>
     <table style="width:100%;border-collapse:collapse;">
       <thead>
@@ -3969,11 +4036,12 @@ async function openPermissionsAdmin() {
           <th style="text-align:left;padding:6px;">Email</th>
           <th style="padding:6px;">Pipeline</th>
           <th style="padding:6px;">Partners</th>
+          <th style="padding:6px;">Docs</th>
           <th style="padding:6px;">Admin</th>
           <th style="padding:6px;"></th>
         </tr>
       </thead>
-      <tbody>${rows || '<tr><td colspan="5" style="padding:16px;text-align:center;color:var(--text-secondary);font-size:13px;">No users yet</td></tr>'}</tbody>
+      <tbody>${rows || '<tr><td colspan="6" style="padding:16px;text-align:center;color:var(--text-secondary);font-size:13px;">No users yet</td></tr>'}</tbody>
     </table>
   `;
 
@@ -4007,7 +4075,7 @@ function showAdminModal(title, bodyHtml) {
 async function addPerm() {
   const email = (document.getElementById('newPermEmail').value || '').trim().toLowerCase();
   if (!email || !email.includes('@')) { toast('Valid email required', 'error'); return; }
-  await savePerm({ email, canInvestors: false, canPartnerships: true, isAdmin: false });
+  await savePerm({ email, canInvestors: false, canPartnerships: true, canDocuments: true, isAdmin: false });
   openPermissionsAdmin();
   toast('User added');
 }
@@ -4090,11 +4158,19 @@ function switchSection(section) {
   currentSection = section;
   document.getElementById('secInvestors').classList.toggle('active', section === 'investors');
   document.getElementById('secPartnerships').classList.toggle('active', section === 'partnerships');
+  const secDoc = document.getElementById('secDocuments');
+  if (secDoc) secDoc.classList.toggle('active', section === 'documents');
   document.getElementById('investorsSection').style.display = section === 'investors' ? '' : 'none';
   document.getElementById('partnershipsSection').style.display = section === 'partnerships' ? '' : 'none';
+  const docSection = document.getElementById('documentsSection');
+  if (docSection) docSection.style.display = section === 'documents' ? '' : 'none';
   const fab = document.querySelector('.fab');
-  if (fab) fab.setAttribute('onclick', section === 'investors' ? "openPanel('new')" : "openPtnPanel('new')");
+  if (fab) {
+    const map = { investors: "openPanel('new')", partnerships: "openPtnPanel('new')", documents: "openDocPanel('new')" };
+    fab.setAttribute('onclick', map[section] || map.investors);
+  }
   if (section === 'partnerships') renderPartnerships();
+  if (section === 'documents') renderDocuments();
 }
 
 function setPtnCatFilter(cat, btn) {
@@ -4418,6 +4494,348 @@ function getPartnershipSeed() {
 }
 
 // ════════════════════════════════════════════════════════════════
+// DOCUMENTS MODULE
+// ════════════════════════════════════════════════════════════════
+let documents = [];
+let docCatFilter = 'all';
+let docTypeFilter = 'all';
+let editingDocId = null;
+const DOC_STORAGE_KEY = 'fb_documents';
+
+const DOC_TYPE_META = {
+  sheet:     { icon: '📊', label: 'Sheet',     color: '#0F9D58' },
+  doc:       { icon: '📄', label: 'Doc',       color: '#4285F4' },
+  slides:    { icon: '📽️', label: 'Slides',    color: '#F4B400' },
+  pdf:       { icon: '📕', label: 'PDF',       color: '#C8352E' },
+  folder:    { icon: '📁', label: 'Folder',    color: '#5F6368' },
+  dashboard: { icon: '📈', label: 'Dashboard', color: '#7C4A8C' },
+  link:      { icon: '🔗', label: 'Link',      color: '#1A2338' },
+  note:      { icon: '📝', label: 'Note',      color: '#8C6A4A' },
+};
+
+function docTypeFromUrl(url) {
+  if (!url) return 'link';
+  if (url.includes('/spreadsheets/')) return 'sheet';
+  if (url.includes('/document/')) return 'doc';
+  if (url.includes('/presentation/')) return 'slides';
+  if (url.includes('/drive/folders/') || url.includes('/folders/')) return 'folder';
+  if (url.endsWith('.pdf') || url.includes('.pdf')) return 'pdf';
+  if (url.includes('dashboard')) return 'dashboard';
+  return 'link';
+}
+
+async function loadDocumentsFromServer() {
+  try {
+    const resp = await fetch('/api/documents');
+    if (!resp.ok) throw new Error('load failed ' + resp.status);
+    return await resp.json();
+  } catch (e) {
+    console.error('Documents load failed, using cache:', e);
+    try { return JSON.parse(localStorage.getItem(DOC_STORAGE_KEY)) || []; } catch { return []; }
+  }
+}
+async function saveDocument(d) {
+  try {
+    const resp = await fetch('/api/documents?action=upsert', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) });
+    if (!resp.ok) toast('⚠️ Document save failed', 'error');
+  } catch (e) { console.error('Document save error:', e); }
+  localStorage.setItem(DOC_STORAGE_KEY, JSON.stringify(documents));
+}
+async function saveAllDocuments() {
+  try {
+    const resp = await fetch('/api/documents?action=bulk', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(documents) });
+    const result = await resp.json().catch(() => ({}));
+    if (!resp.ok) toast('⚠️ Document save ' + resp.status, 'error');
+    else if (result.failed && result.failed.length > 0) toast('⚠️ ' + result.failed.length + ' docs failed', 'error');
+  } catch (e) { console.error('Document bulk save error:', e); }
+  localStorage.setItem(DOC_STORAGE_KEY, JSON.stringify(documents));
+}
+async function deleteDocumentFromServer(id) {
+  try { await fetch('/api/documents?id=' + encodeURIComponent(id), { method: 'DELETE' }); }
+  catch (e) { console.error('Document delete error:', e); }
+}
+function saveDocData() {
+  localStorage.setItem(DOC_STORAGE_KEY, JSON.stringify(documents));
+  if (saveDocData._timer) clearTimeout(saveDocData._timer);
+  saveDocData._timer = setTimeout(() => saveAllDocuments(), 800);
+}
+
+function setDocCatFilter(cat, btn) {
+  docCatFilter = cat;
+  document.getElementById('docCatDropdown').querySelectorAll('.filter-dropdown-item').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('docCatBtn').classList.toggle('has-filter', cat !== 'all');
+  document.getElementById('docCatDropdown').classList.remove('open');
+  renderDocuments();
+}
+function setDocTypeFilter(type, btn) {
+  docTypeFilter = type;
+  document.getElementById('docTypeDropdown').querySelectorAll('.filter-dropdown-item').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('docTypeBtn').classList.toggle('has-filter', type !== 'all');
+  document.getElementById('docTypeDropdown').classList.remove('open');
+  renderDocuments();
+}
+
+function renderDocuments() {
+  const container = document.getElementById('docCardsContainer');
+  const search = (document.getElementById('docSearchInput').value || '').toLowerCase();
+  let pool = documents.slice();
+  if (docCatFilter !== 'all') pool = pool.filter(d => d.category === docCatFilter);
+  if (docTypeFilter !== 'all') pool = pool.filter(d => d.type === docTypeFilter);
+  if (search) {
+    pool = pool.filter(d =>
+      (d.title || '').toLowerCase().includes(search) ||
+      (d.notes || '').toLowerCase().includes(search) ||
+      (d.tags || '').toLowerCase().includes(search) ||
+      (d.owner || '').toLowerCase().includes(search) ||
+      (d.category || '').toLowerCase().includes(search)
+    );
+  }
+  pool.sort((a, b) => a.title.localeCompare(b.title));
+
+  if (pool.length === 0) {
+    container.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><p>No documents match. Tap + to add one.</p></div>';
+    updateDocCounts(); return;
+  }
+
+  container.innerHTML = pool.map(d => {
+    const meta = DOC_TYPE_META[d.type] || DOC_TYPE_META.link;
+    const hasUrl = d.url && d.type !== 'note';
+    return `
+      <div class="card doc-card" onclick="openDocPanel('view','${d.id}')" style="cursor:pointer;">
+        <div style="display:flex;align-items:flex-start;gap:10px;">
+          <div style="font-size:22px;line-height:1;">${meta.icon}</div>
+          <div style="flex:1;min-width:0;">
+            <div class="card-firm" style="font-size:15px;margin-bottom:2px;word-break:break-word;">${esc(d.title)}</div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;">
+              ${d.category ? `<span class="board-cell-tag" style="background:#F0E8F5;color:#7C4A8C;">${esc(d.category)}</span>` : ''}
+              <span class="board-cell-tag" style="background:var(--soft-grey,#F5F5F5);color:${meta.color};">${meta.label}</span>
+              ${d.owner ? `<span class="board-cell-tag owner">${esc(d.owner.split('@')[0])}</span>` : ''}
+            </div>
+            ${d.notes ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:8px;line-height:1.4;">${esc(d.notes.length > 110 ? d.notes.substring(0,110) + '…' : d.notes)}</div>` : ''}
+          </div>
+        </div>
+        ${hasUrl ? `<div style="margin-top:10px;"><a href="${esc(d.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="btn btn-secondary btn-sm" style="width:100%;text-align:center;display:block;text-decoration:none;">Open ↗</a></div>` : ''}
+      </div>`;
+  }).join('');
+  updateDocCounts();
+}
+
+function updateDocCounts() {
+  document.getElementById('docStatTotal').textContent = documents.length;
+  document.getElementById('docStatSheets').textContent = documents.filter(d => d.type === 'sheet').length;
+  document.getElementById('docStatDocs').textContent = documents.filter(d => d.type === 'doc').length;
+  document.getElementById('docStatNotes').textContent = documents.filter(d => d.type === 'note').length;
+}
+
+function openDocPanel(mode, id) {
+  if (!myPermissions.canDocuments) return;
+  editingDocId = (mode === 'view' && id) ? id : null;
+  const d = editingDocId ? documents.find(x => x.id === editingDocId) : { title: '', type: 'link', category: '', url: '', owner: '', notes: '', tags: '' };
+  if (!d) return;
+  const footer = document.getElementById('panelFooter');
+  document.getElementById('panelTitle').textContent = editingDocId ? d.title : 'New Document / Note';
+  document.getElementById('panelBody').innerHTML = buildDocForm(d);
+  footer.innerHTML = editingDocId
+    ? `<div style="display:flex;gap:8px;width:100%;"><button class="btn btn-danger btn-sm" onclick="deleteDoc('${editingDocId}')" style="flex-shrink:0;">Delete</button><button class="btn btn-primary" onclick="saveDoc()" style="flex:1;">Save Changes</button></div>`
+    : `<button class="btn btn-primary" onclick="saveDoc()" style="flex:1;">Add</button>`;
+  document.getElementById('slidePanel').classList.add('open');
+  document.getElementById('panelOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function buildDocForm(d) {
+  const owners = ['', 'Andrew', 'Xin', 'Lynn', 'Amy', 'Harper', 'Jenna', 'Roxanne'];
+  const cats = ['', 'Investor', 'Clinical', 'Marketing', 'GEO/SEO', 'Retail', 'Contracts', 'Ops/Finance', 'Resource', 'Note'];
+  const types = ['sheet','doc','slides','pdf','folder','dashboard','link','note'];
+  return `
+    <div class="form-group"><label class="form-label">Title</label>
+      <input class="form-input" id="dTitle" value="${esc(d.title || '')}" placeholder="Document or note name"></div>
+    <div class="form-group"><label class="form-label">Link (URL)</label>
+      <input class="form-input" id="dUrl" value="${esc(d.url || '')}" placeholder="https://docs.google.com/..." oninput="autoDetectDocType()"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Type</label>
+        <select class="form-select" id="dType">${types.map(t => `<option value="${t}" ${d.type === t ? 'selected' : ''}>${DOC_TYPE_META[t].icon} ${DOC_TYPE_META[t].label}</option>`).join('')}</select></div>
+      <div class="form-group"><label class="form-label">Category</label>
+        <select class="form-select" id="dCategory">${cats.map(c => `<option value="${c}" ${d.category === c ? 'selected' : ''}>${c || '—'}</option>`).join('')}</select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Owner</label>
+        <select class="form-select" id="dOwner">${owners.map(o => `<option value="${o}" ${(d.owner||'').split('@')[0].toLowerCase() === o.toLowerCase() && o ? 'selected' : (d.owner === o ? 'selected' : '')}>${o || 'Unassigned'}</option>`).join('')}</select></div>
+      <div class="form-group"><label class="form-label">Tags</label>
+        <input class="form-input" id="dTags" value="${esc(d.tags || '')}" placeholder="comma, separated"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label>
+      <textarea class="form-textarea" id="dNotes" placeholder="What this is, what's in it, who needs it...">${esc(d.notes || '')}</textarea></div>
+  `;
+}
+
+function autoDetectDocType() {
+  const url = document.getElementById('dUrl').value;
+  const detected = docTypeFromUrl(url);
+  const sel = document.getElementById('dType');
+  if (sel && url) sel.value = detected;
+}
+
+function saveDoc() {
+  const title = document.getElementById('dTitle').value.trim();
+  if (!title) { toast('Title required', 'error'); return; }
+  const data = {
+    title,
+    url: document.getElementById('dUrl').value.trim(),
+    type: document.getElementById('dType').value,
+    category: document.getElementById('dCategory').value,
+    owner: document.getElementById('dOwner').value,
+    tags: document.getElementById('dTags').value.trim(),
+    notes: document.getElementById('dNotes').value.trim(),
+  };
+  if (editingDocId) {
+    const d = documents.find(x => x.id === editingDocId);
+    Object.assign(d, data);
+    saveDocument(d);
+  } else {
+    const d = { id: 'doc_' + Date.now() + '_' + Math.random().toString(36).substr(2,5), ...data, created: new Date().toISOString() };
+    documents.push(d);
+    saveDocument(d);
+  }
+  saveDocData();
+  renderDocuments();
+  closePanel();
+  toast(editingDocId ? 'Document updated' : 'Document added');
+}
+
+function deleteDoc(id) {
+  if (!id) return;
+  const d = documents.find(x => x.id === id);
+  if (!d) return;
+  if (confirm(`Delete "${d.title}"?`)) {
+    documents = documents.filter(x => x.id !== id);
+    deleteDocumentFromServer(id);
+    saveDocData();
+    renderDocuments();
+    closePanel();
+    toast('Document deleted');
+  }
+}
+
+function getDocumentSeed() {
+  const now = new Date().toISOString();
+  const mk = (title, type, category, url, owner, notes, tags) => ({
+    id: 'doc_seed_' + title.toLowerCase().replace(/[^a-z0-9]/g,'').substr(0,24) + '_' + Math.random().toString(36).substr(2,4),
+    title, type, category, url: url||'', owner: owner||'', notes: notes||'', tags: tags||'', created: now
+  });
+  const MASTER = 'https://docs.google.com/spreadsheets/d/1YJoBaFNIhVPh_D5A0n7qxLR6KqTu0dW7raX5LgqNo7Y/edit';
+  // The Sheet3 resource cells all link to the workbook's resources tab (gid 576921669).
+  const RES = MASTER + '?gid=576921669#gid=576921669';
+  return [
+    // The master sheet itself
+    mk('Partnerships Master Sheet ("Leah Hand off convos")', 'sheet', 'Retail', MASTER, 'Andrew', 'Source sheet for the Partnerships board — doctors, influencers, retail, giveaways, and the linked resources below.', 'partnerships, master, source'),
+    // Erewhon
+    mk('Erewhon Training & Demo Info', 'sheet', 'Retail', RES, 'Lynn', 'Erewhon training and demo info — products all linked. Opens the resources tab of the master sheet.', 'erewhon, training, demo'),
+    mk('Erewhon Dashboard', 'dashboard', 'Retail', 'https://dashboard.erewhonmarket.com/dashboard', 'Lynn', 'Erewhon vendor dashboard. Lynn has the login; Harper has access.', 'erewhon, dashboard, retail'),
+    mk('Repositrack (Erewhon Compliance)', 'dashboard', 'Retail', '', 'Jenna', 'Erewhon compliance system. Jenna has been given access.', 'erewhon, compliance, repositrack'),
+    // Doctor / Derm resources
+    mk('Doctor Payment Terms & Tracking', 'sheet', 'Clinical', RES, 'Lynn', 'Derm advisory payment terms and tracking.', 'derm, payments, tracking'),
+    mk('Doctor Whitelisting & UGC Links', 'sheet', 'Marketing', RES, 'Lynn', 'Derm whitelisting and UGC links.', 'derm, whitelisting, UGC'),
+    mk('Dr. Anthony Youn — Whitelisting Commissions Tracking', 'sheet', 'Marketing', RES, 'Lynn', 'Youn whitelisting commissions tracking.', 'youn, whitelisting, commissions'),
+    mk('AAD Contacts', 'sheet', 'Resource', RES, '', 'American Academy of Dermatology contacts.', 'AAD, derm, contacts'),
+    // Distributor / product
+    mk('CRE Product Info', 'sheet', 'Retail', RES, 'Amy', 'CRE distributor product info.', 'CRE, distributor, product'),
+    // Influencer / marketing resources
+    mk('Master List of Influencers', 'sheet', 'Marketing', RES, '', 'Master influencer list.', 'influencers, list'),
+    mk('Corporate Gifting Companies', 'sheet', 'Resource', RES, '', 'Many are dropship (less useful) but kept as a resource.', 'gifting, corporate, resource'),
+    // Agency rosters (wellness / Erewhon partnerships)
+    mk('Reiman Agency Roster', 'sheet', 'Resource', RES, '', 'Great for wellness or Erewhon partnerships.', 'roster, agency, wellness'),
+    mk('The Sociable Society — Roster', 'sheet', 'Resource', RES, '', 'Great for wellness or Erewhon partnerships.', 'roster, agency, wellness'),
+    mk('Delegated MGMT — Roster', 'sheet', 'Resource', RES, '', 'Great for wellness or Erewhon partnerships.', 'roster, agency, wellness'),
+    // Podcasts
+    mk('Podcasts', 'sheet', 'Marketing', RES, '', 'Podcast outreach resource tab.', 'podcast, outreach'),
+    mk('Dear Media — Podcast Contacts', 'note', 'Marketing', '', '', 'Podcast booking contacts: jclose@dearmedia.com, christy@dearmedia.com', 'podcast, dear media, booking'),
+    mk('Alex Clark — Culture Apothecary', 'note', 'Marketing', '', '', 'Podcast contact: noah.olson@tpusa.com (~20k).', 'podcast, alex clark, TPUSA'),
+    // Seals
+    mk('Seals', 'sheet', 'Resource', RES, '', 'Seals resource (from master sheet).', 'seals, resource'),
+  ];
+}
+
+// ════════════════════════════════════════════════════════════════
+// GLOBAL SEARCH (across all accessible sections)
+// ════════════════════════════════════════════════════════════════
+function openGlobalSearch() {
+  document.getElementById('globalSearchModal').classList.add('open');
+  const input = document.getElementById('globalSearchInput');
+  input.value = '';
+  document.getElementById('globalSearchResults').innerHTML = '<div style="color:var(--text-secondary);font-size:13px;text-align:center;padding:30px;">Type to search everything you have access to.</div>';
+  setTimeout(() => input.focus(), 50);
+}
+function closeGlobalSearch() {
+  document.getElementById('globalSearchModal').classList.remove('open');
+}
+function runGlobalSearch() {
+  const q = (document.getElementById('globalSearchInput').value || '').toLowerCase().trim();
+  const box = document.getElementById('globalSearchResults');
+  if (!q) { box.innerHTML = '<div style="color:var(--text-secondary);font-size:13px;text-align:center;padding:30px;">Type to search everything you have access to.</div>'; return; }
+
+  const groups = [];
+
+  if (myPermissions.canInvestors) {
+    const hits = investors.filter(i =>
+      (i.firm||'').toLowerCase().includes(q) || (i.contact||'').toLowerCase().includes(q) ||
+      (i.email||'').toLowerCase().includes(q) || (i.notes||'').toLowerCase().includes(q) ||
+      (i.thesis||'').toLowerCase().includes(q) || (i.owner||'').toLowerCase().includes(q)
+    ).slice(0, 8);
+    if (hits.length) groups.push({ name: 'Pipeline', color: 'var(--blue)', items: hits.map(i => ({
+      title: i.firm, sub: [i.contact, statusLabel(i.status), i.owner].filter(Boolean).join(' · '),
+      action: `closeGlobalSearch();switchSection('investors');openPanel('view','${i.id}')`
+    })) });
+  }
+
+  if (myPermissions.canPartnerships) {
+    const hits = partnerships.filter(p =>
+      (p.name||'').toLowerCase().includes(q) || (p.org||'').toLowerCase().includes(q) ||
+      (p.emails||'').toLowerCase().includes(q) || (p.notes||'').toLowerCase().includes(q) ||
+      (p.owner||'').toLowerCase().includes(q) || (p.category||'').toLowerCase().includes(q)
+    ).slice(0, 8);
+    if (hits.length) groups.push({ name: 'Partnerships', color: 'var(--orange)', items: hits.map(p => ({
+      title: p.name, sub: [p.org, p.category, ptnStageLabel(p.stage), p.owner].filter(Boolean).join(' · '),
+      action: `closeGlobalSearch();switchSection('partnerships');openPtnPanel('view','${p.id}')`
+    })) });
+  }
+
+  if (myPermissions.canDocuments) {
+    const hits = documents.filter(d =>
+      (d.title||'').toLowerCase().includes(q) || (d.notes||'').toLowerCase().includes(q) ||
+      (d.tags||'').toLowerCase().includes(q) || (d.owner||'').toLowerCase().includes(q) ||
+      (d.category||'').toLowerCase().includes(q)
+    ).slice(0, 10);
+    if (hits.length) groups.push({ name: 'Documents', color: '#7C4A8C', items: hits.map(d => ({
+      title: (DOC_TYPE_META[d.type]||DOC_TYPE_META.link).icon + ' ' + d.title,
+      sub: [d.category, d.tags].filter(Boolean).join(' · '),
+      action: `closeGlobalSearch();switchSection('documents');openDocPanel('view','${d.id}')`,
+      url: d.type !== 'note' ? d.url : ''
+    })) });
+  }
+
+  if (groups.length === 0) {
+    box.innerHTML = '<div style="color:var(--text-secondary);font-size:13px;text-align:center;padding:30px;">No matches found.</div>';
+    return;
+  }
+
+  box.innerHTML = groups.map(g => `
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.06em;color:${g.color};font-weight:700;margin-bottom:6px;">${g.name} <span style="color:var(--text-secondary);">(${g.items.length})</span></div>
+      ${g.items.map(it => `
+        <div onclick="${it.action}" style="padding:8px 10px;border-radius:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;" onmouseover="this.style.background='var(--soft-grey,#F5F5F5)'" onmouseout="this.style.background=''">
+          <div style="min-width:0;">
+            <div style="font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(it.title)}</div>
+            ${it.sub ? `<div style="font-size:12px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(it.sub)}</div>` : ''}
+          </div>
+          ${it.url ? `<a href="${esc(it.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="font-size:12px;color:var(--blue);text-decoration:none;flex-shrink:0;">Open ↗</a>` : ''}
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════════════════════════════
 (async function init() {
@@ -4494,6 +4912,24 @@ function getPartnershipSeed() {
     toast('Partnerships directory seeded', 'success');
   }
 
+  // Load documents (separate table) — seed on first run
+  const docServer = await loadDocumentsFromServer();
+  documents = (docServer && docServer.length > 0) ? docServer : [];
+
+  // One-time reseed: replace the earlier Drive-dump seed with the sheet-referenced set.
+  // Preserves any user-added docs (ids not starting with 'doc_seed_').
+  if (!localStorage.getItem('fb_doc_seed_v3')) {
+    const oldSeeds = documents.filter(d => (d.id || '').startsWith('doc_seed_'));
+    for (const d of oldSeeds) { await deleteDocumentFromServer(d.id); }
+    const userDocs = documents.filter(d => !(d.id || '').startsWith('doc_seed_'));
+    documents = [...getDocumentSeed(), ...userDocs];
+    await saveAllDocuments();
+    localStorage.setItem('fb_doc_seed_v3', '1');
+    localStorage.setItem('fb_doc_seed_v2', '1');
+    toast('Documents synced from master sheet', 'success');
+  }
+  localStorage.setItem(DOC_STORAGE_KEY, JSON.stringify(documents));
+
   if (currentUser) {
     const firstName = currentUser.name?.split(' ')[0] || currentUser.email?.split('@')[0];
     const members = settings.teamMembers.split(',').map(m => m.trim());
@@ -4505,6 +4941,7 @@ function getPartnershipSeed() {
 
   // Pre-render partnerships board so it's ready, then enforce access
   renderPartnerships();
+  renderDocuments();
   applyPermissions();
 })();
 
@@ -4515,6 +4952,12 @@ document.addEventListener('keydown', e => {
     closeSettings();
     closeTemplates();
     closeImportModal();
+    if (typeof closeGlobalSearch === 'function') closeGlobalSearch();
+  }
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault();
+    const gsb = document.getElementById('globalSearchBtn');
+    if (typeof openGlobalSearch === 'function' && gsb && gsb.style.display !== 'none') openGlobalSearch();
   }
 });
 
