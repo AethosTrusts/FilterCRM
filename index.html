@@ -3853,17 +3853,11 @@ async function loadMyPermissions() {
       const data = await resp.json();
       allPermissions = data.users || [];
 
-      // Bootstrap: if no permission records exist at all, first user gets temp admin
-      if (allPermissions.length === 0) {
-        myPermissions = { canInvestors: true, canPartnerships: true, isAdmin: true };
-        return;
-      }
-
       const mine = allPermissions.find(u => u.email.toLowerCase() === email);
       if (mine) {
         myPermissions = { canInvestors: mine.canInvestors, canPartnerships: mine.canPartnerships, isAdmin: mine.isAdmin };
       } else {
-        // No record for this user — no access
+        // No record for this user — no access until Andrew grants it
         myPermissions = { canInvestors: false, canPartnerships: false, isAdmin: false };
       }
     }
