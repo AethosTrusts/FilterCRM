@@ -1408,6 +1408,10 @@ body {
       <span>Import</span>
     </button>
     <input type="file" id="importFileInput" accept=".xlsx,.xls,.csv" style="display:none;" onchange="handleImportFile(event)">
+    <button class="header-btn" id="permAdminBtn" onclick="openPermissionsAdmin()" title="Manage team access" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      <span>Access</span>
+    </button>
     <button class="header-btn" onclick="openSettings()" title="Settings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
       <span>Settings</span>
@@ -3829,6 +3833,206 @@ function ptnStageLabel(s) {
   return found ? found.label : s;
 }
 
+// ── PERMISSIONS ──
+const PERMANENT_ADMIN_EMAIL = 'liang@filterbaby.com';
+let myPermissions = { canInvestors: false, canPartnerships: false, isAdmin: false };
+let allPermissions = [];
+
+async function loadMyPermissions() {
+  const email = (currentUser && currentUser.email || '').toLowerCase();
+
+  // Permanent admin always has full access
+  if (email === PERMANENT_ADMIN_EMAIL) {
+    myPermissions = { canInvestors: true, canPartnerships: true, isAdmin: true };
+    return;
+  }
+
+  try {
+    const resp = await fetch('/api/permissions');
+    if (resp.ok) {
+      const data = await resp.json();
+      allPermissions = data.users || [];
+
+      // Bootstrap: if no permission records exist at all, first user gets temp admin
+      if (allPermissions.length === 0) {
+        myPermissions = { canInvestors: true, canPartnerships: true, isAdmin: true };
+        return;
+      }
+
+      const mine = allPermissions.find(u => u.email.toLowerCase() === email);
+      if (mine) {
+        myPermissions = { canInvestors: mine.canInvestors, canPartnerships: mine.canPartnerships, isAdmin: mine.isAdmin };
+      } else {
+        // No record for this user — no access
+        myPermissions = { canInvestors: false, canPartnerships: false, isAdmin: false };
+      }
+    }
+  } catch (e) {
+    console.error('Permission load failed:', e);
+    myPermissions = { canInvestors: false, canPartnerships: false, isAdmin: false };
+  }
+}
+
+function applyPermissions() {
+  const secInv = document.getElementById('secInvestors');
+  const secPtn = document.getElementById('secPartnerships');
+  const invSection = document.getElementById('investorsSection');
+  const ptnSection = document.getElementById('partnershipsSection');
+
+  // Show admin access button only to admins
+  const permBtn = document.getElementById('permAdminBtn');
+  if (permBtn) permBtn.style.display = myPermissions.isAdmin ? '' : 'none';
+
+  // Toggle switcher button visibility
+  secInv.style.display = myPermissions.canInvestors ? '' : 'none';
+  secPtn.style.display = myPermissions.canPartnerships ? '' : 'none';
+
+  // No access to anything → lock screen
+  if (!myPermissions.canInvestors && !myPermissions.canPartnerships) {
+    invSection.style.display = 'none';
+    ptnSection.style.display = 'none';
+    showNoAccessScreen();
+    return;
+  }
+
+  // Pick the default section the user can see
+  if (myPermissions.canInvestors) {
+    switchSection('investors');
+  } else if (myPermissions.canPartnerships) {
+    switchSection('partnerships');
+  }
+
+  // Hide switcher entirely if user only has one section
+  const switcher = document.querySelector('.section-switcher');
+  if (switcher) {
+    const count = (myPermissions.canInvestors ? 1 : 0) + (myPermissions.canPartnerships ? 1 : 0);
+    switcher.style.display = count > 1 ? '' : 'none';
+  }
+}
+
+function showNoAccessScreen() {
+  let el = document.getElementById('noAccessScreen');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'noAccessScreen';
+    el.style.cssText = 'text-align:center;padding:80px 24px;color:var(--text-secondary);';
+    el.innerHTML = `
+      <div style="font-size:40px;margin-bottom:16px;">🔒</div>
+      <div style="font-size:18px;font-weight:600;color:var(--text);margin-bottom:8px;">No access yet</div>
+      <div style="font-size:14px;max-width:340px;margin:0 auto;">Your account doesn't have access to any section. Contact Andrew (liang@filterbaby.com) to be granted access.</div>
+    `;
+    document.querySelector('.app-main, main, body').appendChild(el);
+  }
+  el.style.display = '';
+}
+
+// ── Permissions admin UI (Andrew only) ──
+async function openPermissionsAdmin() {
+  if (!myPermissions.isAdmin) { toast('Admin only', 'error'); return; }
+  try {
+    const resp = await fetch('/api/permissions');
+    const data = await resp.json();
+    allPermissions = data.users || [];
+  } catch (e) { console.error(e); }
+
+  const rows = allPermissions.map(u => `
+    <tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:8px 6px;font-size:13px;">${esc(u.email)}${u.email.toLowerCase() === PERMANENT_ADMIN_EMAIL ? ' <span style="color:var(--gold-dark);font-size:10px;">(you · permanent admin)</span>' : ''}</td>
+      <td style="text-align:center;"><input type="checkbox" ${u.canInvestors ? 'checked' : ''} ${u.email.toLowerCase() === PERMANENT_ADMIN_EMAIL ? 'disabled' : ''} onchange="updatePerm('${esc(u.email)}','canInvestors',this.checked)"></td>
+      <td style="text-align:center;"><input type="checkbox" ${u.canPartnerships ? 'checked' : ''} ${u.email.toLowerCase() === PERMANENT_ADMIN_EMAIL ? 'disabled' : ''} onchange="updatePerm('${esc(u.email)}','canPartnerships',this.checked)"></td>
+      <td style="text-align:center;"><input type="checkbox" ${u.isAdmin ? 'checked' : ''} ${u.email.toLowerCase() === PERMANENT_ADMIN_EMAIL ? 'disabled' : ''} onchange="updatePerm('${esc(u.email)}','isAdmin',this.checked)"></td>
+      <td style="text-align:center;">${u.email.toLowerCase() === PERMANENT_ADMIN_EMAIL ? '' : `<button class="btn btn-sm btn-danger" style="padding:2px 8px;font-size:11px;" onclick="removePerm('${esc(u.email)}')">×</button>`}</td>
+    </tr>
+  `).join('');
+
+  const body = `
+    <div style="margin-bottom:16px;">
+      <label class="form-label">Add / grant access to a user</label>
+      <div style="display:flex;gap:8px;">
+        <input class="form-input" id="newPermEmail" placeholder="user@filterbaby.com" style="flex:1;">
+        <button class="btn btn-primary btn-sm" onclick="addPerm()">Add</button>
+      </div>
+      <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">New users start with Partnerships access. Toggle below to adjust.</div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="border-bottom:2px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-secondary);">
+          <th style="text-align:left;padding:6px;">Email</th>
+          <th style="padding:6px;">Pipeline</th>
+          <th style="padding:6px;">Partners</th>
+          <th style="padding:6px;">Admin</th>
+          <th style="padding:6px;"></th>
+        </tr>
+      </thead>
+      <tbody>${rows || '<tr><td colspan="5" style="padding:16px;text-align:center;color:var(--text-secondary);font-size:13px;">No users yet</td></tr>'}</tbody>
+    </table>
+  `;
+
+  // Reuse the settings modal shell if present, else a simple overlay
+  showAdminModal('Team Permissions', body);
+}
+
+function showAdminModal(title, bodyHtml) {
+  let modal = document.getElementById('permAdminModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'permAdminModal';
+    modal.className = 'modal-overlay';
+    modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('open'); };
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div class="modal" onclick="event.stopPropagation()" style="max-width:560px;">
+      <div class="modal-header">
+        <div class="modal-title">${title}</div>
+      </div>
+      <div class="modal-body" style="max-height:60vh;overflow-y:auto;">${bodyHtml}</div>
+      <div class="modal-footer" style="display:flex;gap:8px;">
+        <button class="btn btn-secondary" onclick="document.getElementById('permAdminModal').classList.remove('open')" style="flex:1;">Close</button>
+      </div>
+    </div>
+  `;
+  modal.classList.add('open');
+}
+
+async function addPerm() {
+  const email = (document.getElementById('newPermEmail').value || '').trim().toLowerCase();
+  if (!email || !email.includes('@')) { toast('Valid email required', 'error'); return; }
+  await savePerm({ email, canInvestors: false, canPartnerships: true, isAdmin: false });
+  openPermissionsAdmin();
+  toast('User added');
+}
+
+async function updatePerm(email, field, value) {
+  const u = allPermissions.find(x => x.email.toLowerCase() === email.toLowerCase()) || { email, canInvestors: false, canPartnerships: false, isAdmin: false };
+  u[field] = value;
+  await savePerm(u);
+}
+
+async function savePerm(u) {
+  try {
+    const resp = await fetch('/api/permissions?action=upsert', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(u)
+    });
+    if (resp.ok) {
+      const saved = await resp.json();
+      const idx = allPermissions.findIndex(x => x.email.toLowerCase() === saved.email.toLowerCase());
+      if (idx >= 0) allPermissions[idx] = saved; else allPermissions.push(saved);
+    } else { toast('Save failed', 'error'); }
+  } catch (e) { console.error(e); toast('Save failed', 'error'); }
+}
+
+async function removePerm(email) {
+  if (!confirm('Remove access for ' + email + '?')) return;
+  try {
+    await fetch('/api/permissions?email=' + encodeURIComponent(email), { method: 'DELETE' });
+    allPermissions = allPermissions.filter(x => x.email.toLowerCase() !== email.toLowerCase());
+    openPermissionsAdmin();
+    toast('Access removed');
+  } catch (e) { console.error(e); }
+}
+
 async function loadPartnershipsFromServer() {
   try {
     const resp = await fetch('/api/partnerships');
@@ -4211,6 +4415,9 @@ function getPartnershipSeed() {
   await fetchServerStatus();
   updateSetupBanner();
 
+  // Load this user's permissions before loading data
+  await loadMyPermissions();
+
   // Load investors from Netlify DB (Neon)
   toast('Loading pipeline...');
   const serverData = await loadDataFromServer();
@@ -4285,6 +4492,10 @@ function getPartnershipSeed() {
       saveSettingsData(settings);
     }
   }
+
+  // Pre-render partnerships board so it's ready, then enforce access
+  renderPartnerships();
+  applyPermissions();
 })();
 
 // Close modals on escape

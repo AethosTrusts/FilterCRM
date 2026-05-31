@@ -63,6 +63,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/permissions"
+  to = "/.netlify/functions/permissions"
+  status = 200
+
+[[redirects]]
   from = "/api/status"
   to = "/.netlify/functions/status"
   status = 200
