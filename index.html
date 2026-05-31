@@ -65,15 +65,29 @@ body {
   font-size: 20px;
   letter-spacing: -0.02em;
 }
-.header-badge {
+.section-switcher {
+  display: flex;
+  background: rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+.section-btn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.6);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 5px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.section-btn:hover { color: var(--cream); }
+.section-btn.active {
   background: var(--gold);
   color: var(--dark);
-  font-size: 10px;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
 }
 .header-actions {
   display: flex;
@@ -1367,7 +1381,10 @@ body {
 <header class="header">
   <div class="header-brand">
     <div class="header-logo">filterbaby</div>
-    <div class="header-badge">Pipeline</div>
+    <div class="section-switcher">
+      <button class="section-btn active" id="secInvestors" onclick="switchSection('investors')">Pipeline</button>
+      <button class="section-btn" id="secPartnerships" onclick="switchSection('partnerships')">Partnerships</button>
+    </div>
   </div>
   <div class="header-actions">
     <button class="header-btn" onclick="startResearchAll()" id="researchAllBtn" title="AI-research all un-profiled investors">
@@ -1417,6 +1434,8 @@ body {
 </div>
 
 <!-- STATS BAR -->
+<!-- ═══ INVESTORS SECTION ═══ -->
+<div id="investorsSection">
 <div class="stats-bar" id="statsBar">
   <div class="stat-item">
     <div class="stat-value" id="statTotal">0</div>
@@ -1508,6 +1527,52 @@ body {
 
 <!-- BOARD VIEW -->
 <div class="board-container" id="boardContainer"></div>
+</div><!-- /investorsSection -->
+
+<!-- ═══ PARTNERSHIPS SECTION ═══ -->
+<div id="partnershipsSection" style="display:none;">
+  <div class="stats-bar" id="ptnStatsBar">
+    <div class="stat-item"><div class="stat-value" id="ptnStatTotal">0</div><div class="stat-label">Total</div></div>
+    <div class="stat-item"><div class="stat-value" id="ptnStatActive">0</div><div class="stat-label">Active Partners</div></div>
+    <div class="stat-item"><div class="stat-value" id="ptnStatConvo">0</div><div class="stat-label">In Conversation</div></div>
+    <div class="stat-item"><div class="stat-value" id="ptnStatGiveaway">0</div><div class="stat-label">Giveaways</div></div>
+  </div>
+
+  <div class="filter-bar">
+    <input type="search" class="search-input" id="ptnSearchInput" placeholder="Search partners, contacts, notes..." oninput="renderPartnerships()">
+    <div class="filter-dropdown-wrap">
+      <button class="filter-pill" id="ptnCatBtn" onclick="toggleDropdown('ptnCatDropdown')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:-2px;margin-right:3px;"><path d="M4 4h16v16H4zM4 9h16M9 4v16"/></svg>Category
+      </button>
+      <div class="filter-dropdown" id="ptnCatDropdown">
+        <button class="filter-dropdown-item active" onclick="setPtnCatFilter('all', this)">All categories</button>
+        <button class="filter-dropdown-item" onclick="setPtnCatFilter('Derm', this)">Derm / Medical</button>
+        <button class="filter-dropdown-item" onclick="setPtnCatFilter('Influencer', this)">Influencer / Creator</button>
+        <button class="filter-dropdown-item" onclick="setPtnCatFilter('Retail', this)">Retail / Wholesale</button>
+        <button class="filter-dropdown-item" onclick="setPtnCatFilter('Hospitality', this)">Hospitality / Wellness</button>
+        <button class="filter-dropdown-item" onclick="setPtnCatFilter('Distributor', this)">Distributor</button>
+        <button class="filter-dropdown-item" onclick="setPtnCatFilter('Ops', this)">Ops / Vendor</button>
+        <button class="filter-dropdown-item" onclick="setPtnCatFilter('Media', this)">Media / Awards</button>
+        <button class="filter-dropdown-item" onclick="setPtnCatFilter('Resource', this)">Resource / Roster</button>
+      </div>
+    </div>
+    <div class="filter-dropdown-wrap">
+      <button class="filter-pill" id="ptnOwnerBtn" onclick="toggleDropdown('ptnOwnerDropdown')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;vertical-align:-2px;margin-right:3px;"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Owner
+      </button>
+      <div class="filter-dropdown" id="ptnOwnerDropdown">
+        <button class="filter-dropdown-item active" onclick="setPtnOwnerFilter('all', this)">Everyone</button>
+        <button class="filter-dropdown-item" onclick="setPtnOwnerFilter('Lynn', this)">Lynn</button>
+        <button class="filter-dropdown-item" onclick="setPtnOwnerFilter('Xin', this)">Xin</button>
+        <button class="filter-dropdown-item" onclick="setPtnOwnerFilter('Amy', this)">Amy</button>
+        <button class="filter-dropdown-item" onclick="setPtnOwnerFilter('Harper', this)">Harper</button>
+        <button class="filter-dropdown-item" onclick="setPtnOwnerFilter('Jenna', this)">Jenna</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="board-container visible" id="ptnBoardContainer"></div>
+</div><!-- /partnershipsSection -->
 
 <!-- FAB -->
 <button class="fab" onclick="openPanel('new')" title="Add investor">
@@ -3730,6 +3795,415 @@ function composeQuickEmail(investorId) {
 
 
 // ════════════════════════════════════════════════════════════════
+// PARTNERSHIPS MODULE
+// ════════════════════════════════════════════════════════════════
+let partnerships = [];
+let currentSection = 'investors';
+let ptnCatFilter = 'all';
+let ptnOwnerFilter = 'all';
+let editingPtnId = null;
+let ptnDragColIdx = null;
+
+const PTN_STORAGE_KEY = 'fb_partnerships';
+
+const PTN_STAGES = [
+  { key: 'prospect', label: 'Prospect', color: 'var(--text-secondary)' },
+  { key: 'introd', label: "Intro'd", color: 'var(--blue)' },
+  { key: 'conversation', label: 'In Conversation', color: 'var(--orange)' },
+  { key: 'active', label: 'Active Partner', color: 'var(--green)' },
+  { key: 'giveaway', label: 'Giveaway / Seeding', color: 'var(--gold-dark)' },
+  { key: 're-engaging', label: 'Re-engaging', color: '#8C4A6A' },
+  { key: 'resource', label: 'Resource', color: '#7C4A8C' },
+];
+
+try {
+  const savedPtnOrder = JSON.parse(localStorage.getItem('fb_ptn_board_order'));
+  if (savedPtnOrder && savedPtnOrder.length === PTN_STAGES.length) {
+    const reordered = savedPtnOrder.map(k => PTN_STAGES.find(s => s.key === k)).filter(Boolean);
+    if (reordered.length === PTN_STAGES.length) PTN_STAGES.splice(0, PTN_STAGES.length, ...reordered);
+  }
+} catch (e) {}
+
+function ptnStageLabel(s) {
+  const found = PTN_STAGES.find(x => x.key === s);
+  return found ? found.label : s;
+}
+
+async function loadPartnershipsFromServer() {
+  try {
+    const resp = await fetch('/api/partnerships');
+    if (!resp.ok) throw new Error('load failed ' + resp.status);
+    return await resp.json();
+  } catch (e) {
+    console.error('Partnerships load failed, using cache:', e);
+    try { return JSON.parse(localStorage.getItem(PTN_STORAGE_KEY)) || []; } catch { return []; }
+  }
+}
+
+async function savePartnership(p) {
+  try {
+    const resp = await fetch('/api/partnerships?action=upsert', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p)
+    });
+    if (!resp.ok) toast('⚠️ Partner save failed', 'error');
+  } catch (e) { console.error('Partner save error:', e); }
+  localStorage.setItem(PTN_STORAGE_KEY, JSON.stringify(partnerships));
+}
+
+async function saveAllPartnerships() {
+  try {
+    const resp = await fetch('/api/partnerships?action=bulk', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(partnerships)
+    });
+    const result = await resp.json().catch(() => ({}));
+    if (!resp.ok) toast('⚠️ Partner save ' + resp.status, 'error');
+    else if (result.failed && result.failed.length > 0) toast('⚠️ ' + result.failed.length + ' partners failed', 'error');
+  } catch (e) { console.error('Partner bulk save error:', e); }
+  localStorage.setItem(PTN_STORAGE_KEY, JSON.stringify(partnerships));
+}
+
+async function deletePartnershipFromServer(id) {
+  try { await fetch('/api/partnerships?id=' + encodeURIComponent(id), { method: 'DELETE' }); }
+  catch (e) { console.error('Partner delete error:', e); }
+}
+
+function savePtnData() {
+  localStorage.setItem(PTN_STORAGE_KEY, JSON.stringify(partnerships));
+  if (savePtnData._timer) clearTimeout(savePtnData._timer);
+  savePtnData._timer = setTimeout(() => saveAllPartnerships(), 800);
+}
+
+function switchSection(section) {
+  currentSection = section;
+  document.getElementById('secInvestors').classList.toggle('active', section === 'investors');
+  document.getElementById('secPartnerships').classList.toggle('active', section === 'partnerships');
+  document.getElementById('investorsSection').style.display = section === 'investors' ? '' : 'none';
+  document.getElementById('partnershipsSection').style.display = section === 'partnerships' ? '' : 'none';
+  const fab = document.querySelector('.fab');
+  if (fab) fab.setAttribute('onclick', section === 'investors' ? "openPanel('new')" : "openPtnPanel('new')");
+  if (section === 'partnerships') renderPartnerships();
+}
+
+function setPtnCatFilter(cat, btn) {
+  ptnCatFilter = cat;
+  document.getElementById('ptnCatDropdown').querySelectorAll('.filter-dropdown-item').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('ptnCatBtn').classList.toggle('has-filter', cat !== 'all');
+  document.getElementById('ptnCatDropdown').classList.remove('open');
+  renderPartnerships();
+}
+function setPtnOwnerFilter(owner, btn) {
+  ptnOwnerFilter = owner;
+  document.getElementById('ptnOwnerDropdown').querySelectorAll('.filter-dropdown-item').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('ptnOwnerBtn').classList.toggle('has-filter', owner !== 'all');
+  document.getElementById('ptnOwnerDropdown').classList.remove('open');
+  renderPartnerships();
+}
+
+function renderPartnerships() {
+  const container = document.getElementById('ptnBoardContainer');
+  const search = (document.getElementById('ptnSearchInput').value || '').toLowerCase();
+
+  let pool = partnerships;
+  if (ptnCatFilter !== 'all') pool = pool.filter(p => p.category === ptnCatFilter);
+  if (ptnOwnerFilter !== 'all') pool = pool.filter(p => (p.owner || '').toLowerCase().includes(ptnOwnerFilter.toLowerCase()));
+  if (search) {
+    pool = pool.filter(p =>
+      (p.name || '').toLowerCase().includes(search) ||
+      (p.org || '').toLowerCase().includes(search) ||
+      (p.emails || '').toLowerCase().includes(search) ||
+      (p.notes || '').toLowerCase().includes(search) ||
+      (p.owner || '').toLowerCase().includes(search)
+    );
+  }
+
+  const cols = PTN_STAGES.map((stage, colIdx) => {
+    const items = pool.filter(p => p.stage === stage.key).sort((a, b) => a.name.localeCompare(b.name));
+    const cells = items.length > 0
+      ? items.map(p => `
+        <div class="board-cell" onclick="openPtnPanel('view', '${p.id}')">
+          <div class="board-cell-firm">${esc(p.name)}</div>
+          ${p.org ? `<div class="board-cell-contact">${esc(p.org)}</div>` : ''}
+          <div class="board-cell-meta">
+            ${p.category ? `<span class="board-cell-tag" style="background:#F0E8F5;color:#7C4A8C;">${esc(p.category)}</span>` : ''}
+            ${p.owner ? `<span class="board-cell-tag owner">${esc(p.owner)}</span>` : ''}
+            ${p.emails ? `<span class="board-cell-tag email">✉</span>` : ''}
+            ${p.products ? `<span class="board-cell-tag" style="background:var(--gold-light);color:var(--gold-dark);">🎁</span>` : ''}
+            ${p.nextFollowup ? `<span class="board-cell-tag meeting-date">📅 ${new Date(p.nextFollowup + 'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>` : ''}
+          </div>
+        </div>
+      `).join('')
+      : '<div class="board-empty">None</div>';
+
+    return `
+      <div class="board-col" draggable="true" data-col-idx="${colIdx}"
+        ondragstart="ptnDragStart(event, ${colIdx})" ondragover="ptnDragOver(event)"
+        ondrop="ptnDrop(event, ${colIdx})" ondragend="ptnDragEnd(event)">
+        <div class="board-col-header" style="cursor:grab;">
+          <span style="display:flex;align-items:center;gap:6px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;opacity:0.4;"><path d="M8 6h.01M8 12h.01M8 18h.01M16 6h.01M16 12h.01M16 18h.01"/></svg>
+            ${stage.label}
+          </span>
+          <span class="board-col-count">${items.length}</span>
+        </div>
+        <div class="board-col-body">${cells}</div>
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = `<div class="board-grid">${cols}</div>`;
+  updatePtnCounts();
+}
+
+function updatePtnCounts() {
+  document.getElementById('ptnStatTotal').textContent = partnerships.length;
+  document.getElementById('ptnStatActive').textContent = partnerships.filter(p => p.stage === 'active').length;
+  document.getElementById('ptnStatConvo').textContent = partnerships.filter(p => p.stage === 'conversation').length;
+  document.getElementById('ptnStatGiveaway').textContent = partnerships.filter(p => p.stage === 'giveaway').length;
+}
+
+function ptnDragStart(e, idx) { ptnDragColIdx = idx; e.dataTransfer.effectAllowed = 'move'; e.target.style.opacity = '0.5'; }
+function ptnDragOver(e) { e.preventDefault(); const c = e.target.closest('.board-col'); if (c) { document.querySelectorAll('#ptnBoardContainer .board-col').forEach(x => x.style.borderLeft = ''); c.style.borderLeft = '3px solid var(--gold)'; } }
+function ptnDrop(e, targetIdx) {
+  e.preventDefault();
+  document.querySelectorAll('#ptnBoardContainer .board-col').forEach(c => { c.style.borderLeft = ''; c.style.opacity = ''; });
+  if (ptnDragColIdx === null || ptnDragColIdx === targetIdx) return;
+  const moved = PTN_STAGES.splice(ptnDragColIdx, 1)[0];
+  PTN_STAGES.splice(targetIdx, 0, moved);
+  localStorage.setItem('fb_ptn_board_order', JSON.stringify(PTN_STAGES.map(s => s.key)));
+  ptnDragColIdx = null;
+  renderPartnerships();
+}
+function ptnDragEnd(e) { e.target.style.opacity = ''; document.querySelectorAll('#ptnBoardContainer .board-col').forEach(c => c.style.borderLeft = ''); ptnDragColIdx = null; }
+
+function openPtnPanel(mode, id) {
+  editingPtnId = (mode === 'view' && id) ? id : null;
+  const p = editingPtnId ? partnerships.find(x => x.id === editingPtnId) : {
+    name: '', org: '', category: '', stage: 'prospect', emails: '', owner: '', link: '', products: '', notes: '', timeline: []
+  };
+  if (!p) return;
+  const footer = document.getElementById('panelFooter');
+  document.getElementById('panelTitle').textContent = editingPtnId ? p.name : 'New Partner';
+  document.getElementById('panelBody').innerHTML = buildPtnForm(p);
+
+  if (editingPtnId) {
+    footer.innerHTML = `
+      <div style="display:flex;gap:8px;width:100%;">
+        <button class="btn btn-danger btn-sm" onclick="deletePtn('${editingPtnId}')" style="flex-shrink:0;">Delete</button>
+        <button class="btn btn-primary" onclick="savePtn()" style="flex:1;">Save Changes</button>
+      </div>`;
+  } else {
+    footer.innerHTML = `<button class="btn btn-primary" onclick="savePtn()" style="flex:1;">Add Partner</button>`;
+  }
+
+  document.getElementById('slidePanel').classList.add('open');
+  document.getElementById('panelOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function buildPtnForm(p) {
+  const owners = ['', 'Lynn', 'Xin', 'Amy', 'Harper', 'Jenna', 'Andrew'];
+  const cats = ['', 'Derm', 'Influencer', 'Retail', 'Hospitality', 'Distributor', 'Ops', 'Media', 'Resource'];
+  return `
+    <div class="form-group">
+      <label class="form-label">Name</label>
+      <input class="form-input" id="pName" value="${esc(p.name || '')}" placeholder="Person or organization">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Organization / Agency</label>
+      <input class="form-input" id="pOrg" value="${esc(p.org || '')}" placeholder="e.g. Underscore Talent, Erewhon">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-select" id="pCategory">
+          ${cats.map(c => `<option value="${c}" ${p.category === c ? 'selected' : ''}>${c || '—'}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Stage</label>
+        <select class="form-select" id="pStage">
+          ${PTN_STAGES.map(s => `<option value="${s.key}" ${p.stage === s.key ? 'selected' : ''}>${s.label}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email(s)</label>
+      <input class="form-input" id="pEmails" value="${esc(p.emails || '')}" placeholder="Comma-separated">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Owner (internal)</label>
+        <select class="form-select" id="pOwner">
+          ${owners.map(o => `<option value="${o}" ${p.owner === o ? 'selected' : ''}>${o || 'Unassigned'}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Next Follow-up</label>
+        <input class="form-input" id="pNextFollowup" type="date" value="${p.nextFollowup ? p.nextFollowup.substring(0,10) : ''}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Products Sent (giveaways)</label>
+      <input class="form-input" id="pProducts" value="${esc(p.products || '')}" placeholder="e.g. shower filter, faucet filter">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Link</label>
+      <input class="form-input" id="pLink" value="${esc(p.link || '')}" placeholder="Dashboard, doc, or profile URL">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <textarea class="form-textarea" id="pNotes" placeholder="Relationship status, who's connected, context...">${esc(p.notes || '')}</textarea>
+    </div>
+    ${editingPtnId ? buildPtnTimeline(p) : ''}
+  `;
+}
+
+function buildPtnTimeline(p) {
+  const items = (p.timeline || []).map(t =>
+    `<div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-content"><div class="timeline-text">${esc(t.text)}</div><div class="timeline-date">${t.date ? new Date(t.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : ''}${t.by ? ' · ' + esc(t.by) : ''}</div></div></div>`
+  ).join('');
+  return `
+    <div class="form-group" style="margin-top:18px;">
+      <label class="form-label">Activity</label>
+      <div class="timeline">${items || '<div style="color:var(--text-secondary);font-size:13px;">No activity yet</div>'}</div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <input class="form-input" id="ptnQuickInput" placeholder="Add a note..." style="flex:1;" onkeydown="if(event.key==='Enter')addPtnNote()">
+        <button class="btn-secondary" onclick="addPtnNote()">Add</button>
+      </div>
+    </div>
+  `;
+}
+
+function savePtn() {
+  const name = document.getElementById('pName').value.trim();
+  if (!name) { toast('Name required', 'error'); return; }
+  const data = {
+    name,
+    org: document.getElementById('pOrg').value.trim(),
+    category: document.getElementById('pCategory').value,
+    stage: document.getElementById('pStage').value,
+    emails: document.getElementById('pEmails').value.trim(),
+    owner: document.getElementById('pOwner').value,
+    nextFollowup: document.getElementById('pNextFollowup').value || '',
+    products: document.getElementById('pProducts').value.trim(),
+    link: document.getElementById('pLink').value.trim(),
+    notes: document.getElementById('pNotes').value.trim(),
+  };
+  if (editingPtnId) {
+    const p = partnerships.find(x => x.id === editingPtnId);
+    const oldStage = p.stage;
+    Object.assign(p, data);
+    if (oldStage !== data.stage) addPtnTimelineEntry(editingPtnId, `Stage: ${ptnStageLabel(oldStage)} → ${ptnStageLabel(data.stage)}`);
+    savePartnership(p);
+  } else {
+    const p = { id: 'ptn_' + Date.now() + '_' + Math.random().toString(36).substr(2,5), ...data, timeline: [{ text: 'Added to partnerships', date: new Date().toISOString(), by: (settings.teamMembers.split(',')[0] || 'System').trim() }], created: new Date().toISOString() };
+    partnerships.push(p);
+    savePartnership(p);
+  }
+  savePtnData();
+  renderPartnerships();
+  closePanel();
+  toast(editingPtnId ? 'Partner updated' : 'Partner added');
+}
+
+function addPtnTimelineEntry(id, text) {
+  const p = partnerships.find(x => x.id === id);
+  if (!p) return;
+  if (!p.timeline) p.timeline = [];
+  p.timeline.unshift({ text, date: new Date().toISOString(), by: (settings.teamMembers.split(',')[0] || 'System').trim() });
+}
+
+function addPtnNote() {
+  const input = document.getElementById('ptnQuickInput');
+  const text = input.value.trim();
+  if (!text || !editingPtnId) return;
+  const p = partnerships.find(x => x.id === editingPtnId);
+  if (!p) return;
+  p.name = document.getElementById('pName').value.trim() || p.name;
+  p.org = document.getElementById('pOrg').value.trim();
+  p.category = document.getElementById('pCategory').value;
+  p.stage = document.getElementById('pStage').value;
+  p.emails = document.getElementById('pEmails').value.trim();
+  p.owner = document.getElementById('pOwner').value;
+  p.products = document.getElementById('pProducts').value.trim();
+  p.link = document.getElementById('pLink').value.trim();
+  p.notes = document.getElementById('pNotes').value.trim();
+  addPtnTimelineEntry(editingPtnId, text);
+  savePtnData();
+  input.value = '';
+  document.getElementById('panelBody').innerHTML = buildPtnForm(p);
+  toast('Note added');
+}
+
+function deletePtn(id) {
+  if (!id) return;
+  const p = partnerships.find(x => x.id === id);
+  if (!p) return;
+  if (confirm(`Delete ${p.name}?`)) {
+    partnerships = partnerships.filter(x => x.id !== id);
+    deletePartnershipFromServer(id);
+    savePtnData();
+    renderPartnerships();
+    closePanel();
+    toast('Partner deleted');
+  }
+}
+
+function getPartnershipSeed() {
+  const now = new Date().toISOString();
+  const mk = (name, org, category, stage, emails, owner, notes, products, link) => ({
+    id: 'ptn_seed_' + name.toLowerCase().replace(/[^a-z0-9]/g,'').substr(0,20) + '_' + Math.random().toString(36).substr(2,4),
+    name, org: org||'', category: category||'', stage: stage||'prospect', emails: emails||'', owner: owner||'',
+    notes: notes||'', products: products||'', link: link||'', timeline: [], created: now
+  });
+  return [
+    mk('Dr. Jenny Liu', 'The Digital Dept', 'Derm', 'introd', 'sydney@thedigitaldept.com, olivia@thedigitaldept.com', 'Lynn', "Intro'd to Lynn."),
+    mk('Dr. Lindsey Zubritsky', 'Gushcloud', 'Derm', 'introd', 'renee.wong@gushcloud.com, emily.chung@gushcloud.com', 'Lynn', "Intro'd to Lynn. Xin is cc'd."),
+    mk('Dr. Anthony Youn', 'Underscore Talent', 'Derm', 'conversation', 'linnea@underscoretalent.com, cc@underscoretalent.com', 'Lynn', "Intro'd to Lynn. Xin is connected. Whitelisting commissions tracking active."),
+    mk('Dr. Mamina Turegano', 'Underscore Talent / Mione Mgmt', 'Derm', 'conversation', 'mtureganomd@gmail.com, maddie.nomura@underscoretalent.com, amanda@underscoretalent.com, hope@mionemanagement.com', 'Lynn', "Intro'd to Lynn. Lynn is connected."),
+    mk('Dr. Dorfman', 'Tech Coast Creative', 'Derm', 'conversation', 'sahil@techcoastcreative.com', 'Xin', 'Xin is handling Dorfman.'),
+    mk('Non Toxic Dad', '', 'Influencer', 'introd', 'collab@nontoxicdad.com', 'Xin', "Intro'd Xin."),
+    mk('Glen Coco', 'The Prtnrs', 'Influencer', 'conversation', 'lauren@theprtnrs.com, coco@theprtnrs.com', 'Xin', 'Xin is connected directly to Glen.'),
+    mk('Sara Jane Ho', '', 'Influencer', 'introd', 'sarajaneho@gmail.com', 'Lynn', "Intro'd lynn and harper."),
+    mk('Karen', 'Dulcedo', 'Influencer', 'introd', 'tram@dulcedo.com', 'Lynn', "Intro'd lynn."),
+    mk('Nadine', '', 'Influencer', 'introd', 'naturalnadine3@gmail.com', 'Lynn', "Intro'd lynn."),
+    mk('Erewhon', '', 'Retail', 'active', 'laurenm@erewhon.com, vito@erewhon.com, elizabeth@erewhon.com', 'Lynn', "Intro'd lynn. laurenm = overall account, elizabeth = overall store."),
+    mk('Proper Hotel', '', 'Hospitality', 'active', 'deedee.brown@properhotel.com', 'Lynn', "Intro'd lynn."),
+    mk('Equinox Hotels', '', 'Hospitality', 'conversation', 'Iris.Cordero@equinox-hotels.com, angela.portella@equinox-hotels.com', 'Amy', "Iris = spa manager (intro'd amy & lynn). Angela = higher-up manager, Xin in contact."),
+    mk('Emiliani Metro', '', 'Distributor', 'conversation', 'nancyd@emilianimetro.com', 'Xin', "Distributor for hair salons. Intro'd Xin and Amy."),
+    mk('National Eczema Association', '', 'Retail', 'conversation', 's.iannotti@nationaleczema.org, B.Sleeper@nationaleczema.org', 'Xin', 'Loop Xin in.'),
+    mk('ALO LA', 'Alo Yoga', 'Hospitality', 're-engaging', 'Izzy.Talarico@aloyoga.com', 'Lynn', 'Working on re-engaging.'),
+    mk('PVOLVE', '', 'Hospitality', 'introd', 'abowers@pvolve.com', 'Lynn', "Intro'd lynn."),
+    mk('Likeminded', '', 'Retail', 'conversation', 'rhunteraronson@gmail.com', 'Lynn', 'Lynn is on it.'),
+    mk('CRE Distributors', '', 'Distributor', 'active', 'ashton@credistributors.com', 'Amy', 'CRE product info on file.'),
+    mk('Premco', '', 'Distributor', 'active', '', 'Amy', 'Amy handling.'),
+    mk('Life Time Gym', '', 'Hospitality', 'conversation', 'mdvorsak@lt.life', 'Xin', 'Xin is in contact.'),
+    mk('Inn Beauty', '', 'Influencer', 'giveaway', '', 'Harper', "Intro'd harper.", 'essential shower filter, faucet filter'),
+    mk('Antevorta', '', 'Influencer', 'giveaway', '', 'Harper', "Intro'd harper and lynn. Just had her baby — needs some time."),
+    mk('Face Reality', '', 'Derm', 'giveaway', '', 'Harper', "Intro'd harper.", 'essential shower filter, faucet filter'),
+    mk('Epionce', '', 'Derm', 'giveaway', '', 'Harper', "Intro'd harper."),
+    mk('Linkby', '', 'Ops', 'active', 'akemi@linkby.com', 'Amy', 'Amy is looped in.'),
+    mk('Withcoverage (Insurance)', '', 'Ops', 'active', 'team@withcoverage.com', '', 'Insurance vendor.'),
+    mk('Axe & Co', '', 'Ops', 'conversation', 'matthewaxe@axeandco.com', 'Xin', 'Rebrand. Xin is connected.'),
+    mk('Grassroots Demos', '', 'Ops', 'introd', 'bridget@grassrootsdemos.com', 'Lynn', "Intro'd to Lynn. Demo option."),
+    mk('Julia Fong', '', 'Ops', 'introd', 'juliaisfong@gmail.com', 'Lynn', 'Demo option. Lynn is connected.'),
+    mk('Nordstrom RA Process', '', 'Retail', 'conversation', 'Brittany.Creasy@nordstrom.com', 'Lynn', "Intro'd to lynn. Jenna involved."),
+    mk('Repositrack', '', 'Ops', 'resource', '', 'Jenna', 'Erewhon compliance system. Jenna has access.'),
+    mk('Erewhon Dashboard', '', 'Ops', 'resource', '', 'Lynn', 'Lynn has the login. Harper has access.', '', 'https://dashboard.erewhonmarket.com/dashboard'),
+    mk('Laurel Supply', '', 'Distributor', 'introd', '', 'Lynn', "Hana. Intro'd to lynn. Leah/Harper involved."),
+    mk('CEW Awards', '', 'Media', 'resource', '', 'Xin', "Added Xin's email."),
+    mk('Allure', '', 'Media', 'resource', '', 'Xin', "Xin is cc'd."),
+    mk('Dear Media', '', 'Media', 'resource', 'jclose@dearmedia.com, christy@dearmedia.com', '', 'Podcast contacts.'),
+    mk('Alex Clark — Culture Apothecary', 'TPUSA', 'Media', 'resource', 'noah.olson@tpusa.com', '', 'Podcast. ~20k.'),
+    mk('Reiman Agency', '', 'Resource', 'resource', '', '', 'Great for wellness or erewhon partnerships.'),
+    mk('The Sociable Society', '', 'Resource', 'resource', '', '', 'Roster — great for wellness or erewhon partnerships.'),
+    mk('Delegated MGMT', '', 'Resource', 'resource', '', '', 'Roster — great for wellness or erewhon partnerships.'),
+  ];
+}
+
+// ════════════════════════════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════════════════════════════
 (async function init() {
@@ -3790,6 +4264,18 @@ function composeQuickEmail(investorId) {
   }
 
   renderCards();
+
+  // Load partnerships (separate table) — seed on first run
+  const ptnServer = await loadPartnershipsFromServer();
+  if (ptnServer && ptnServer.length > 0) {
+    partnerships = ptnServer;
+    localStorage.setItem(PTN_STORAGE_KEY, JSON.stringify(partnerships));
+  } else {
+    partnerships = getPartnershipSeed();
+    localStorage.setItem(PTN_STORAGE_KEY, JSON.stringify(partnerships));
+    await saveAllPartnerships();
+    toast('Partnerships directory seeded', 'success');
+  }
 
   if (currentUser) {
     const firstName = currentUser.name?.split(' ')[0] || currentUser.email?.split('@')[0];

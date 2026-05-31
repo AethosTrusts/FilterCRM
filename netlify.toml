@@ -58,6 +58,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/partnerships"
+  to = "/.netlify/functions/partnerships"
+  status = 200
+
+[[redirects]]
   from = "/api/status"
   to = "/.netlify/functions/status"
   status = 200
