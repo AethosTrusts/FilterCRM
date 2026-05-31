@@ -1,7 +1,30 @@
 // Netlify DB (Neon Postgres) — user permissions / access control
 // Permanent admin: liang@filterbaby.com (hardcoded, cannot be removed)
 
+const crypto = require('crypto');
 const PERMANENT_ADMIN = 'liang@filterbaby.com';
+
+// Verify the signed session cookie and return the caller's email (or null)
+function getCallerEmail(event) {
+  try {
+    const sessionSecret = process.env.SESSION_SECRET || 'fb-crm-default-secret-2025';
+    const cookies = (event.headers && event.headers.cookie) || '';
+    const match = cookies.match(/fb_session=([^;]+)/);
+    if (!match) return null;
+    const raw = match[1];
+    const idx = raw.lastIndexOf('.');
+    if (idx < 1) return null;
+    const data = raw.substring(0, idx);
+    const sig = raw.substring(idx + 1);
+    const expected = crypto.createHmac('sha256', sessionSecret).update(data).digest('base64url');
+    if (sig !== expected) return null;
+    const session = JSON.parse(Buffer.from(data, 'base64').toString('utf8'));
+    if (Date.now() - session.loggedInAt > 604800000) return null;
+    return (session.email || '').toLowerCase();
+  } catch (e) {
+    return null;
+  }
+}
 
 let neonPromise = null;
 function getNeon() {
@@ -26,10 +49,23 @@ exports.handler = async function(event, context) {
 
     await ensureTable(sql);
 
-    // GET — load all permission records
+    const caller = getCallerEmail(event);
+
+    // GET — load all permission records (any authenticated user may read)
     if (method === 'GET' && !action) {
       const rows = await sql`SELECT * FROM user_permissions ORDER BY email ASC`;
       return json(200, { permanentAdmin: PERMANENT_ADMIN, users: rows.map(dbToApp) });
+    }
+
+    // All writes below require the caller to be an admin.
+    // Admin = permanent admin OR a user flagged is_admin in the table.
+    let callerIsAdmin = (caller === PERMANENT_ADMIN);
+    if (!callerIsAdmin && caller) {
+      const rec = await sql`SELECT is_admin FROM user_permissions WHERE email = ${caller}`;
+      callerIsAdmin = rec[0] && rec[0].is_admin === true;
+    }
+    if ((method === 'POST' || method === 'DELETE') && !callerIsAdmin) {
+      return json(403, { error: 'Admin access required' });
     }
 
     // POST upsert — single permission record
