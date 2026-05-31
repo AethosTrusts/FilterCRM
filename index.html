@@ -2371,6 +2371,7 @@ function cancelBatchOp() {
 // SLIDE PANEL
 // ════════════════════════════════════════════════════════════════
 function openPanel(mode, id) {
+  if (typeof myPermissions !== 'undefined' && !myPermissions.canInvestors) return;
   const panel = document.getElementById('slidePanel');
   const overlay = document.getElementById('panelOverlay');
   const body = document.getElementById('panelBody');
@@ -3881,10 +3882,24 @@ function applyPermissions() {
   secInv.style.display = myPermissions.canInvestors ? '' : 'none';
   secPtn.style.display = myPermissions.canPartnerships ? '' : 'none';
 
-  // No access to anything → lock screen
+  // No access to anything → lock screen, strip ALL functionality
   if (!myPermissions.canInvestors && !myPermissions.canPartnerships) {
     invSection.style.display = 'none';
     ptnSection.style.display = 'none';
+    // Hide every header action button (keep only the user pill for sign-out)
+    document.querySelectorAll('.header-actions .header-btn').forEach(b => b.style.display = 'none');
+    // Hide section switcher, FAB, setup banner
+    const switcher = document.querySelector('.section-switcher');
+    if (switcher) switcher.style.display = 'none';
+    const fab = document.querySelector('.fab');
+    if (fab) fab.style.display = 'none';
+    const banner = document.getElementById('setupBanner');
+    if (banner) banner.style.display = 'none';
+    const statsBar = document.getElementById('statsBar');
+    if (statsBar) statsBar.style.display = 'none';
+    // Close any panel/modal that may have opened
+    if (typeof closePanel === 'function') closePanel();
+    document.body.style.overflow = '';
     showNoAccessScreen();
     return;
   }
@@ -4176,6 +4191,7 @@ function ptnDrop(e, targetIdx) {
 function ptnDragEnd(e) { e.target.style.opacity = ''; document.querySelectorAll('#ptnBoardContainer .board-col').forEach(c => c.style.borderLeft = ''); ptnDragColIdx = null; }
 
 function openPtnPanel(mode, id) {
+  if (!myPermissions.canPartnerships) return;
   editingPtnId = (mode === 'view' && id) ? id : null;
   const p = editingPtnId ? partnerships.find(x => x.id === editingPtnId) : {
     name: '', org: '', category: '', stage: 'prospect', emails: '', owner: '', link: '', products: '', notes: '', timeline: []
