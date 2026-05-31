@@ -79,14 +79,16 @@ exports.handler = async function(event, context) {
         email,
         can_investors: isPermanent ? true : !!p.canInvestors,
         can_partnerships: isPermanent ? true : !!p.canPartnerships,
+        can_documents: isPermanent ? true : !!p.canDocuments,
         is_admin: isPermanent ? true : !!p.isAdmin
       };
       const result = await sql`
-        INSERT INTO user_permissions (email, can_investors, can_partnerships, is_admin, updated_at)
-        VALUES (${row.email}, ${row.can_investors}, ${row.can_partnerships}, ${row.is_admin}, NOW())
+        INSERT INTO user_permissions (email, can_investors, can_partnerships, can_documents, is_admin, updated_at)
+        VALUES (${row.email}, ${row.can_investors}, ${row.can_partnerships}, ${row.can_documents}, ${row.is_admin}, NOW())
         ON CONFLICT (email) DO UPDATE SET
           can_investors = EXCLUDED.can_investors,
           can_partnerships = EXCLUDED.can_partnerships,
+          can_documents = EXCLUDED.can_documents,
           is_admin = EXCLUDED.is_admin,
           updated_at = NOW()
         RETURNING *
@@ -116,10 +118,13 @@ async function ensureTable(sql) {
       email TEXT PRIMARY KEY,
       can_investors BOOLEAN DEFAULT false,
       can_partnerships BOOLEAN DEFAULT false,
+      can_documents BOOLEAN DEFAULT false,
       is_admin BOOLEAN DEFAULT false,
       updated_at TIMESTAMPTZ DEFAULT NOW()
     )
   `;
+  // Add column if upgrading an existing table
+  await sql`ALTER TABLE user_permissions ADD COLUMN IF NOT EXISTS can_documents BOOLEAN DEFAULT false`;
 }
 
 function dbToApp(row) {
@@ -127,6 +132,7 @@ function dbToApp(row) {
     email: row.email,
     canInvestors: !!row.can_investors,
     canPartnerships: !!row.can_partnerships,
+    canDocuments: !!row.can_documents,
     isAdmin: !!row.is_admin,
     updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : ''
   };
